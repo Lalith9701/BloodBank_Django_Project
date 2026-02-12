@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Donor Dashboard</title>
+</head>
+<body>
+
+<h1>Donor Dashboard</h1>
+
+<p>Welcome, {{ request.user.username }}</p>
+
+<ul>
+    <li><a href="{% url 'add_donation' %}">Donate Blood</a></li>
+    <li><a href="{% url 'my_donations' %}">View My Donations</a></li>
+    <li><a href="{% url 'request_blood' %}">Request Blood</a></li>
+</ul>
+
+<a href="{% url 'logout' %}">Logout</a>
+
+</body>
+</html>
+<li><a href="{% url 'my_requests' %}">View My Blood Requests</a></li>

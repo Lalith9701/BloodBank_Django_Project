@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Requester Dashboard</title>
+</head>
+<body>
+
+<h2>Requester Dashboard</h2>
+
+<p>Welcome, {{ request.user.username }}</p>
+
+<ul>
+    <li><a href="{% url 'request_blood' %}">🩸 Request Blood</a></li>
+    <li><a href="{% url 'my_requests' %}">📋 My Requests</a></li>
+</ul>
+
+<a href="{% url 'logout' %}">Logout</a>
+
+</body>
+</html>
+<a href="{% url 'request_blood' %}">Request Blood</a>
+<br><br>
+<a href="{% url 'my_requests' %}">View My Requests</a>

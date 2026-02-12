@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Donor Registration</title>
+</head>
+<body>
+
+<h2>Register as Donor</h2>
+
+<form method="post">
+    {% csrf_token %}
+
+    <input type="text" name="username" placeholder="Username" required><br><br>
+
+    <input type="password" name="password" placeholder="Password" required><br><br>
+
+    <input type="text" name="phone" placeholder="Phone Number" required><br><br>
+
+    <!-- BLOOD GROUP DROPDOWN -->
+    <select name="blood_group" required>
+        <option value="">-- Select Blood Group --</option>
+        {% for group in blood_groups %}
+            <option value="{{ group.id }}">{{ group.blood_group }}</option>
+        {% endfor %}
+    </select><br><br>
+
+    <input type="number" name="age" placeholder="Age" required><br><br>
+
+    <select name="gender" required>
+        <option value="">-- Select Gender --</option>
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+        <option value="Other">Other</option>
+    </select><br><br>
+
+    <input type="number" name="weight" placeholder="Weight (kg)" required><br><br>
+
+    Any health issues?
+    <select name="health_issue">
+        <option value="False">No</option>
+        <option value="True">Yes</option>
+    </select><br><br>
+
+    <button type="submit">Register</button>
+</form>
+
+<a href="/">Back to Login</a>
+
+</body>
+</html>

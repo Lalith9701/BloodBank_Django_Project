@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Blood Stock</title>
+</head>
+<body>
+<h2>Blood Stock</h2>
+
+<a href="{% url 'add_blood_group' %}">Add Blood Group</a> |
+<a href="{% url 'add_blood_stock' %}">Add Blood Stock</a>
+
+<table border="1" cellpadding="10">
+    <tr>
+        <th>Blood Group</th>
+        <th>Units Available</th>
+    </tr>
+    {% for stock in stocks %}
+    <tr>
+        <td>{{ stock.blood_group.blood_group }}</td>
+        <td>{{ stock.units_available }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<br>
+<a href="{% url 'dashboard' %}">Back to Dashboard</a>
+</body>
+</html>

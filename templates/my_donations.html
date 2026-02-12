@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Donations</title>
+</head>
+<body>
+
+<h2>My Donation History</h2>
+
+{% if donations %}
+    <table border="1">
+        <tr>
+            <th>Blood Group</th>
+            <th>Units</th>
+            <th>Date</th>
+        </tr>
+
+        {% for donation in donations %}
+        <tr>
+            <td>{{ donation.blood_group.name }}</td>
+            <td>{{ donation.units }}</td>
+            <td>{{ donation.donation_date }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+{% else %}
+    <p>No donations yet.</p>
+{% endif %}
+
+<br>
+<a href="{% url 'dashboard' %}">Back to Dashboard</a>
+
+</body>
+</html>

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Requests</title>
+</head>
+<body>
+<h2>All Blood Requests</h2>
+
+<table border="1" cellpadding="10">
+    <tr>
+        <th>User</th>
+        <th>Blood Group</th>
+        <th>Units</th>
+        <th>Status</th>
+        <th>Action</th>
+    </tr>
+    {% for r in requests %}
+    <tr>
+        <td>{{ r.user.username }}</td>
+        <td>{{ r.blood_group.blood_group }}</td>
+        <td>{{ r.units_required }}</td>
+        <td>{{ r.status }}</td>
+        <td>
+            {% if r.status == 'Pending' %}
+                <a href="{% url 'approve_request' r.id %}">Approve</a>
+            {% else %}
+                ---
+            {% endif %}
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+<a href="/dashboard/">Back</a>
+</body>
+</html>

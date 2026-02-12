@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Blood Group</title>
+</head>
+<body>
+<h2>Add Blood Group</h2>
+
+<form method="post">
+    {% csrf_token %}
+    <input type="text" name="blood_group" placeholder="A+, O-, B+" required>
+    <button type="submit">Add</button>
+</form>
+
+<a href="{% url 'blood_stock' %}">Back</a>
+</body>
+</html>

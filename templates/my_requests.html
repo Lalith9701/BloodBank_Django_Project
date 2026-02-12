@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Blood Requests</title>
+</head>
+<body>
+
+<h1>My Blood Requests</h1>
+
+{% if requests %}
+<table border="1" cellpadding="10">
+    <tr>
+        <th>Blood Group</th>
+        <th>Units</th>
+        <th>Status</th>
+        <th>Date</th>
+    </tr>
+
+    {% for req in requests %}
+    <tr>
+        <td>{{ req.blood_group }}</td>
+        <td>{{ req.units_required }}</td>
+
+        <td>
+            {% if req.status == "PENDING" %}
+                ⏳ Pending
+            {% elif req.status == "APPROVED" %}
+                ✅ Approved
+            {% else %}
+                ❌ Rejected
+            {% endif %}
+        </td>
+
+        <td>{{ req.request_date }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+<p>No blood requests yet.</p>
+{% endif %}
+
+<br>
+<a href="/dashboard/">Back to Dashboard</a>
+
+</body>
+</html>

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Blood Stock</title>
+</head>
+<body>
+<h2>Add Blood Stock</h2>
+
+<form method="post">
+    {% csrf_token %}
+    <select name="blood_group" required>
+        {% for group in groups %}
+        <option value="{{ group.id }}">{{ group.blood_group }}</option>
+        {% endfor %}
+    </select>
+
+    <input type="number" name="units" placeholder="Units" required>
+    <button type="submit">Add Stock</button>
+</form>
+
+<a href="{% url 'blood_stock' %}">Back</a>
+</body>
+</html>

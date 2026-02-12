@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard | Blood Bank</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f2f6fa;
+            padding: 40px;
+        }
+        .container {
+            max-width: 700px;
+            margin: auto;
+            background: #ffffff;
+            padding: 30px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: crimson;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        li {
+            background: #eee;
+            margin: 10px 0;
+            padding: 12px;
+        }
+        a {
+            text-decoration: none;
+            color: crimson;
+            font-weight: bold;
+        }
+        .logout {
+            display: inline-block;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Welcome, {{ request.user.username }}</h2>
+    <p><strong>Role:</strong> {{ role }}</p>
+
+    <h3>Dashboard Menu</h3>
+
+    <ul>
+        {% if role == 'admin' %}
+            <li><a href="/inventory/stock/">Manage Blood Stock</a></li>
+            <li><a href="/requests/admin/">Approve Blood Requests</a></li>
+            <li><a href="/admin/">Admin Panel</a></li>
+
+        {% elif role == 'donor' %}
+            <li>Update Availability</li>
+            <li>View Donation History</li>
+
+        {% else %}
+            <li><a href="/requests/request/">Request Blood</a></li>
+            <li><a href="/requests/my-requests/">My Requests</a></li>
+        {% endif %}
+    </ul>
+
+    <a class="logout" href="{% url 'logout' %}">Logout</a>
+</div>
+
+</body>
+</html>
