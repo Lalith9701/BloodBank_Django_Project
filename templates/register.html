@@ -1,50 +1,193 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Donor Registration</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donor Registration | Blood Bank Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f9fa; 
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .navbar-brand {
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+        .register-card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08); 
+            background-color: white;
+            overflow: hidden;
+        }
+        .register-header {
+            background-color: #ffe5e8; /* Soft red */
+            padding: 30px 20px 20px;
+            text-align: center;
+            border-bottom: 2px solid #ffccd2;
+        }
+        .icon-circle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: #dc3545;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            font-size: 1.5rem;
+        }
+        .btn-blood {
+            background-color: #dc3545; 
+            color: white;
+            transition: 0.3s;
+        }
+        .btn-blood:hover {
+            background-color: #bb2d3b;
+            color: white;
+        }
+        /* Style adjustments for labels */
+        .form-label {
+            font-size: 0.9rem;
+            margin-bottom: 0.3rem;
+        }
+    </style>
 </head>
 <body>
 
-<h2>Register as Donor</h2>
+    <nav class="navbar navbar-dark bg-danger shadow-sm">
+        <div class="container justify-content-center">
+            <span class="navbar-brand mb-0 h1 fs-4">
+                <i class="bi bi-droplet-fill me-2"></i>Blood Bank Management
+            </span>
+        </div>
+    </nav>
 
-<form method="post">
-    {% csrf_token %}
+    <div class="container flex-grow-1 d-flex justify-content-center align-items-center py-5">
+        <div class="col-12 col-md-10 col-lg-8">
+            
+            <div class="register-card">
+                
+                <div class="register-header">
+                    <div class="icon-circle shadow-sm">
+                        <i class="bi bi-person-lines-fill"></i>
+                    </div>
+                    <h3 class="text-danger fw-bold mb-0">Register as a Donor</h3>
+                    <p class="text-muted small mb-0 mt-2">Join us to save lives. Please fill in your details below.</p>
+                </div>
+                
+                <div class="card-body p-4 p-sm-5 pt-4">
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row g-4 mb-4">
+                            
+                            <div class="col-md-6">
+                                <label for="username" class="form-label text-muted fw-semibold">Username</label>
+                                <div class="input-group shadow-sm">
+                                    <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-person"></i></span>
+                                    <input type="text" class="form-control border-start-0 ps-0" id="username" name="username" placeholder="Choose a username" required>
+                                </div>
+                            </div>
 
-    <input type="text" name="username" placeholder="Username" required><br><br>
+                            <div class="col-md-6">
+                                <label for="password" class="form-label text-muted fw-semibold">Password</label>
+                                <div class="input-group shadow-sm">
+                                    <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-key"></i></span>
+                                    <input type="password" class="form-control border-start-0 ps-0" id="password" name="password" placeholder="Create a secure password" required>
+                                </div>
+                            </div>
 
-    <input type="password" name="password" placeholder="Password" required><br><br>
+                            <div class="col-md-6">
+                                <label for="phone" class="form-label text-muted fw-semibold">Phone Number</label>
+                                <div class="input-group shadow-sm">
+                                    <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-telephone"></i></span>
+                                    <input type="tel" class="form-control border-start-0 ps-0" id="phone" name="phone" placeholder="Enter your phone number" required>
+                                </div>
+                            </div>
 
-    <input type="text" name="phone" placeholder="Phone Number" required><br><br>
+                            <div class="col-md-6">
+                                <label for="blood_group" class="form-label text-muted fw-semibold">Blood Group</label>
+                                <div class="input-group shadow-sm">
+                                    <span class="input-group-text bg-light text-danger border-end-0"><i class="bi bi-droplet-fill"></i></span>
+                                    <select name="blood_group" id="blood_group" class="form-select border-start-0 ps-0" required>
+                                        <option value="" disabled selected>-- Select Blood Group --</option>
+                                        {% for group in blood_groups %}
+                                            <option value="{{ group.id }}">{{ group.blood_group }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
 
-    <!-- BLOOD GROUP DROPDOWN -->
-    <select name="blood_group" required>
-        <option value="">-- Select Blood Group --</option>
-        {% for group in blood_groups %}
-            <option value="{{ group.id }}">{{ group.blood_group }}</option>
-        {% endfor %}
-    </select><br><br>
+                            <div class="col-md-6">
+                                <label for="age" class="form-label text-muted fw-semibold">Age</label>
+                                <div class="input-group shadow-sm">
+                                    <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-calendar-event"></i></span>
+                                    <input type="number" class="form-control border-start-0 ps-0" id="age" name="age" placeholder="e.g., 25" min="18" required>
+                                </div>
+                                <div class="form-text small">Must be at least 18 years old to donate.</div>
+                            </div>
 
-    <input type="number" name="age" placeholder="Age" required><br><br>
+                            <div class="col-md-6">
+                                <label for="gender" class="form-label text-muted fw-semibold">Gender</label>
+                                <div class="input-group shadow-sm">
+                                    <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-gender-ambiguous"></i></span>
+                                    <select name="gender" id="gender" class="form-select border-start-0 ps-0" required>
+                                        <option value="" disabled selected>-- Select Gender --</option>
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                            </div>
 
-    <select name="gender" required>
-        <option value="">-- Select Gender --</option>
-        <option value="Male">Male</option>
-        <option value="Female">Female</option>
-        <option value="Other">Other</option>
-    </select><br><br>
+                            <div class="col-md-6">
+                                <label for="weight" class="form-label text-muted fw-semibold">Weight (kg)</label>
+                                <div class="input-group shadow-sm">
+                                    <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-speedometer2"></i></span>
+                                    <input type="number" class="form-control border-start-0 ps-0" id="weight" name="weight" placeholder="e.g., 65" min="1" required>
+                                </div>
+                            </div>
 
-    <input type="number" name="weight" placeholder="Weight (kg)" required><br><br>
+                            <div class="col-md-6">
+                                <label for="health_issue" class="form-label text-muted fw-semibold">Any ongoing health issues?</label>
+                                <div class="input-group shadow-sm">
+                                    <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-heart-pulse"></i></span>
+                                    <select name="health_issue" id="health_issue" class="form-select border-start-0 ps-0" required>
+                                        <option value="False" selected>No, I am healthy</option>
+                                        <option value="True">Yes</option>
+                                    </select>
+                                </div>
+                            </div>
 
-    Any health issues?
-    <select name="health_issue">
-        <option value="False">No</option>
-        <option value="True">Yes</option>
-    </select><br><br>
+                        </div>
+                        <div class="d-grid mt-2">
+                            <button type="submit" class="btn btn-blood btn-lg fw-bold shadow-sm">
+                                <i class="bi bi-check-circle me-1"></i> Register as Donor
+                            </button>
+                        </div>
+                    </form>
 
-    <button type="submit">Register</button>
-</form>
+                    <div class="text-center mt-4 pt-3 border-top">
+                        <p class="text-muted mb-0 small">
+                            Already have an account? 
+                            <a href="/" class="text-danger fw-bold text-decoration-none">
+                                Login here
+                            </a>
+                        </p>
+                    </div>
 
-<a href="/">Back to Login</a>
+                </div>
+            </div>
+            </div>
+    </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

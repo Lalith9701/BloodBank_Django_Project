@@ -1,34 +1,114 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>My Donations</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Donations | Blood Bank</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f9fa; 
+        }
+        .navbar-brand {
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
+        }
+        /* Custom Table Styling */
+        .table-hover tbody tr:hover {
+            background-color: #fff5f6; /* Very light red tint on hover */
+        }
+        .empty-state {
+            padding: 60px 20px;
+            text-align: center;
+        }
+        .empty-state-icon {
+            font-size: 4rem;
+            color: #dee2e6;
+            margin-bottom: 15px;
+        }
+    </style>
 </head>
 <body>
 
-<h2>My Donation History</h2>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-danger shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-droplet-fill me-2"></i>Blood Bank Management
+            </a>
+            <div class="ms-auto">
+                <a href="{% url 'logout' %}" class="btn btn-sm btn-light text-danger fw-bold">
+                    <i class="bi bi-box-arrow-right me-1"></i> Logout
+                </a>
+            </div>
+        </div>
+    </nav>
 
-{% if donations %}
-    <table border="1">
-        <tr>
-            <th>Blood Group</th>
-            <th>Units</th>
-            <th>Date</th>
-        </tr>
+    <div class="container mt-5">
+        
+        <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+            <h2 class="text-danger fw-bold mb-0">
+                <i class="bi bi-clock-history me-2"></i>My Donation History
+            </h2>
+            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary fw-bold shadow-sm">
+                <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
+            </a>
+        </div>
 
-        {% for donation in donations %}
-        <tr>
-            <td>{{ donation.blood_group.name }}</td>
-            <td>{{ donation.units }}</td>
-            <td>{{ donation.donation_date }}</td>
-        </tr>
-        {% endfor %}
-    </table>
-{% else %}
-    <p>No donations yet.</p>
-{% endif %}
+        {% if donations %}
+            <div class="card mb-5">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-borderless align-middle text-center mb-0">
+                            <thead class="table-danger text-danger">
+                                <tr>
+                                    <th class="py-3">Blood Group</th>
+                                    <th class="py-3">Units Donated</th>
+                                    <th class="py-3">Date of Donation</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for donation in donations %}
+                                <tr class="border-bottom">
+                                    <td class="py-3">
+                                        <span class="badge bg-danger fs-6 px-3 py-2 rounded-pill shadow-sm">
+                                            {{ donation.blood_group.name }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="fw-bold fs-5 text-dark">{{ donation.units }}</span> 
+                                        <span class="text-muted small ms-1">units</span>
+                                    </td>
+                                    <td class="text-secondary fw-semibold">
+                                        <i class="bi bi-calendar-event me-1"></i> {{ donation.donation_date }}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="card mb-5">
+                <div class="card-body empty-state">
+                    <i class="bi bi-clipboard-x empty-state-icon"></i>
+                    <h4 class="text-muted fw-bold">No Donations Yet</h4>
+                    <p class="text-secondary mb-4">You haven't made any blood donations yet. Your future donations will appear here.</p>
+                    <a href="{% url 'add_donation' %}" class="btn btn-danger btn-lg fw-bold px-4 rounded-pill shadow-sm">
+                        <i class="bi bi-heart-pulse-fill me-1"></i> Make Your First Donation
+                    </a>
+                </div>
+            </div>
+        {% endif %}
 
-<br>
-<a href="{% url 'dashboard' %}">Back to Dashboard</a>
+    </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

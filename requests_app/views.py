@@ -90,3 +90,6 @@ def my_requests(request):
     return render(request, 'my_requests.html', {
         'requests': requests
     })
+@login_required
+def admin_requests(request):
+    return render(request, 'admin_requests.html')

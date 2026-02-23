@@ -1,28 +1,122 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Blood Stock</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blood Stock Inventory | Blood Bank</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f8f9fa; 
+        }
+        .navbar-brand {
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
+        }
+        /* Custom Table Styling */
+        .table-hover tbody tr:hover {
+            background-color: #fff5f6; /* Very light red tint on hover */
+        }
+        .btn-blood {
+            background-color: #dc3545; 
+            color: white;
+            transition: 0.3s;
+        }
+        .btn-blood:hover {
+            background-color: #bb2d3b;
+            color: white;
+        }
+    </style>
 </head>
 <body>
-<h2>Blood Stock</h2>
 
-<a href="{% url 'add_blood_group' %}">Add Blood Group</a> |
-<a href="{% url 'add_blood_stock' %}">Add Blood Stock</a>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-danger shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-droplet-fill me-2"></i>Blood Bank Management
+            </a>
+            <div class="ms-auto">
+                <a href="{% url 'logout' %}" class="btn btn-sm btn-light text-danger fw-bold">
+                    <i class="bi bi-box-arrow-right me-1"></i> Logout
+                </a>
+            </div>
+        </div>
+    </nav>
 
-<table border="1" cellpadding="10">
-    <tr>
-        <th>Blood Group</th>
-        <th>Units Available</th>
-    </tr>
-    {% for stock in stocks %}
-    <tr>
-        <td>{{ stock.blood_group.blood_group }}</td>
-        <td>{{ stock.units_available }}</td>
-    </tr>
-    {% endfor %}
-</table>
+    <div class="container mt-5">
+        
+        <div class="row align-items-center mb-4">
+            <div class="col-md-5">
+                <h2 class="text-danger fw-bold mb-0">
+                    <i class="bi bi-moisture me-2"></i>Current Blood Stock
+                </h2>
+            </div>
+            
+            <div class="col-md-7 text-md-end mt-3 mt-md-0 d-flex justify-content-md-end gap-2">
+                <a href="{% url 'add_blood_group' %}" class="btn btn-outline-danger fw-bold shadow-sm">
+                    <i class="bi bi-plus-circle me-1"></i> Add Blood Group
+                </a>
+                <a href="{% url 'add_blood_stock' %}" class="btn btn-blood fw-bold shadow-sm">
+                    <i class="bi bi-stack me-1"></i> Add Blood Stock
+                </a>
+            </div>
+        </div>
 
-<br>
-<a href="{% url 'dashboard' %}">Back to Dashboard</a>
+        <div class="card mb-4">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover table-borderless align-middle text-center mb-0">
+                        <thead class="table-danger text-danger">
+                            <tr>
+                                <th class="py-3" style="width: 50%;">Blood Group</th>
+                                <th class="py-3" style="width: 50%;">Units Available</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stock in stocks %}
+                            <tr class="border-bottom">
+                                <td class="py-3">
+                                    <span class="badge bg-danger fs-5 px-4 py-2 rounded-pill shadow-sm">
+                                        {{ stock.blood_group.blood_group }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if stock.units_available == 0 %}
+                                        <span class="text-danger fw-bold fs-5">0</span>
+                                        <span class="text-muted small ms-1">units (Out of Stock)</span>
+                                    {% else %}
+                                        <span class="fw-bold fs-5 text-dark">{{ stock.units_available }}</span> 
+                                        <span class="text-muted small ms-1">units</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="2" class="text-center text-muted py-5">
+                                    <i class="bi bi-box-seam fs-1 d-block mb-2"></i>
+                                    No blood stock available. Start by adding a blood group!
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="text-start">
+            <a href="{% url 'dashboard' %}" class="btn btn-secondary fw-bold px-4">
+                <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
+            </a>
+        </div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
