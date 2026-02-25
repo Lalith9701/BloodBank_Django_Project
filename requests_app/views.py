@@ -1,6 +1,6 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from inventory.models import BloodGroup, BloodStock
+from inventory.models import BloodGroup
 from donors.models import Donor
 from .models import Donation, BloodRequest
 
@@ -70,7 +70,8 @@ def request_blood(request):
         BloodRequest.objects.create(
             user=request.user,
             blood_group_id=int(blood_group_id),
-            units_required=int(units_required)
+            units_required=int(units_required),
+            status='PENDING'   # ✅ MUST MATCH MODEL
         )
 
         return redirect('dashboard')
@@ -85,11 +86,43 @@ def request_blood(request):
 # ===================================
 @login_required
 def my_requests(request):
-    requests = BloodRequest.objects.filter(user=request.user).order_by('-request_date')
+    requests = BloodRequest.objects.filter(
+        user=request.user
+    ).order_by('-request_date')
 
     return render(request, 'my_requests.html', {
         'requests': requests
     })
+
+
+# ===================================
+# ADMIN REQUESTS (Approve / Reject)
+# ===================================
 @login_required
 def admin_requests(request):
-    return render(request, 'admin_requests.html')
+
+    # Allow only admin/staff
+    if not request.user.is_staff:
+        return redirect('dashboard')
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+        request_id = request.POST.get("request_id")
+
+        blood_request = get_object_or_404(BloodRequest, id=request_id)
+
+        if action == "approve":
+            blood_request.status = "APPROVED"
+            blood_request.save()
+
+        elif action == "reject":
+            blood_request.status = "REJECTED"
+            blood_request.save()
+
+        return redirect('admin_requests')
+
+    requests = BloodRequest.objects.all().order_by('-request_date')
+
+    return render(request, 'admin_requests.html', {
+        'requests': requests
+    })
