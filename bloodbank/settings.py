@@ -79,7 +79,7 @@ WSGI_APPLICATION = 'bloodbank.wsgi.application'
 
 
 # =========================
-# DATABASE (SQLite – OK for final year)
+# DATABASE CONFIGURATION
 # =========================
 DATABASES = {
     'default': {
