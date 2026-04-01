@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% block title %}Rate Our Service | Blood Bank{% endblock %}
+
+{% block extra_head %}
+<style>
+    .star-rating {
+        display: flex;
+        flex-direction: row-reverse;
+        justify-content: flex-end;
+    }
+    .star-rating input {
+        display: none;
+    }
+    .star-rating label {
+        font-size: 2.5rem;
+        color: #ddd;
+        cursor: pointer;
+        transition: color 0.2s;
+        margin-right: 5px;
+    }
+    .star-rating label:hover,
+    .star-rating label:hover ~ label,
+    .star-rating input:checked ~ label {
+        color: #ffc107;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-4">
+    <div class="col-md-8 col-lg-6">
+        <div class="premium-card mb-5 border-0 bg-white">
+            <div class="premium-card-header text-center">
+                <i class="bi bi-star-fill display-1 text-warning mb-3"></i>
+                <h2 class="fw-bold mb-0 text-dark">Rate Your Experience</h2>
+                <p class="text-muted fs-5">Your feedback helps us improve our life-saving service.</p>
+            </div>
+            
+            <div class="card-body p-4 p-sm-5 pt-2">
+                <div class="alert bg-light border-0 shadow-sm mb-4">
+                    <h6 class="fw-bold text-secondary text-uppercase small mb-2">Request Details</h6>
+                    <div class="d-flex justify-content-between">
+                        <span><strong>Blood Group:</strong> {{ blood_request.blood_group.blood_group }}</span>
+                        <span><strong>Units:</strong> {{ blood_request.units_required }}</span>
+                    </div>
+                </div>
+
+                <form method="POST" action="">
+                    {% csrf_token %}
+                    
+                    <!-- Donor Rating -->
+                    <div class="mb-4">
+                        <label class="form-label text-muted fw-bold small text-uppercase">Donor Experience</label>
+                        <p class="small text-muted mt-n1 mb-2">How would you rate the donor's helpfulness and collaboration?</p>
+                        <div class="star-rating">
+                            {% for i in "54321"|make_list %}
+                            <input type="radio" id="donor-star{{ i }}" name="donor_rating" value="{{ i }}" {% if i == "5" %}checked{% endif %}>
+                            <label for="donor-star{{ i }}" title="{{ i }} stars"><i class="bi bi-star-fill"></i></label>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Service Rating -->
+                    <div class="mb-4">
+                        <label class="form-label text-muted fw-bold small text-uppercase">Service Rating</label>
+                        <p class="small text-muted mt-n1 mb-2">Overall satisfaction with the Blood Bank platform and process.</p>
+                        <div class="star-rating">
+                            {% for i in "54321"|make_list %}
+                            <input type="radio" id="service-star{{ i }}" name="service_rating" value="{{ i }}" {% if i == "5" %}checked{% endif %}>
+                            <label for="service-star{{ i }}" title="{{ i }} stars"><i class="bi bi-star-fill"></i></label>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Feedback -->
+                    <div class="mb-5">
+                        <label for="feedback" class="form-label text-muted fw-bold small text-uppercase">Additional Feedback</label>
+                        <textarea name="feedback" id="feedback" rows="4" class="form-control border-0 bg-light shadow-sm" placeholder="Any suggestions or stories you'd like to share?"></textarea>
+                    </div>
+
+                    <div class="d-grid gap-3">
+                        <button type="submit" class="btn btn-primary-custom btn-lg shadow-sm">
+                            <i class="bi bi-check-circle me-2"></i> Submit Rating
+                        </button>
+                        <a href="{% url 'my_requests' %}" class="btn btn-light border text-muted btn-lg">Skip for Now</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

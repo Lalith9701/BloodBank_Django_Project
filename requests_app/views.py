@@ -1,7 +1,15 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.core.mail import send_mail
+from django.conf import settings
+from django.utils import timezone
+from django.http import HttpResponse
+import csv
+
 from inventory.models import BloodGroup
 from donors.models import Donor
+from notifications.models import Notification
 from .models import Donation, BloodRequest
 
 
@@ -10,30 +18,82 @@ from .models import Donation, BloodRequest
 # ===================================
 @login_required
 def add_donation(request):
+    if request.user.role != 'DONOR':
+        return redirect('dashboard')
     blood_groups = BloodGroup.objects.all()
+    try:
+        donor = Donor.objects.get(user=request.user)
+    except Donor.DoesNotExist:
+        messages.error(request, "Donor profile not found.")
+        return redirect('dashboard')
 
     if request.method == 'POST':
-        blood_group_id = request.POST.get('blood_group')
         units = request.POST.get('units')
 
-        if not blood_group_id or not units:
+        if not units:
             return render(request, 'add_donation.html', {
                 'blood_groups': blood_groups,
+                'donor': donor,
                 'error': 'Please fill all fields'
             })
 
-        donor = Donor.objects.get(user=request.user)
+        if donor.eligibility_status == 'PENDING':
+            return render(request, 'add_donation.html', {
+                'blood_groups': blood_groups,
+                'donor': donor,
+                'error': 'Your donation cannot be processed. Your health status requires Admin approval.'
+            })
+        elif donor.eligibility_status == 'REJECTED':
+            return render(request, 'add_donation.html', {
+                'blood_groups': blood_groups,
+                'donor': donor,
+                'error': 'Your donation cannot be processed because your health status was rejected by an Admin.'
+            })
+
+        # Cooldown check (90 days)
+        last_donation = Donation.objects.filter(donor=donor).order_by('-donation_date').first()
+        if last_donation:
+            days_since = (timezone.now() - last_donation.donation_date).days
+            if days_since < 90:
+                return render(request, 'add_donation.html', {
+                    'blood_groups': blood_groups,
+                    'donor': donor,
+                    'error': f'You must wait 90 days between donations. Your last donation was {days_since} days ago. Please wait {90 - days_since} more days.'
+                })
 
         Donation.objects.create(
             donor=donor,
-            blood_group_id=int(blood_group_id),
+            blood_group=donor.blood_group,
             units=int(units)
         )
+        
+        # Mark donor as unavailable after donation (standard cooling period)
+        donor.availability = False
+        donor.save()
+
+        # Notification
+        Notification.objects.create(
+            user=request.user,
+            title="Donation Recorded",
+            message=f"Thank you! Your donation of {units} units has been successfully recorded. Your availability has been set to 'Offline' for recovery.",
+            notif_type="success"
+        )
+        # Email
+        if request.user.email:
+            try:
+                send_mail(
+                    "Blood Bank - Donation Confirmation",
+                    f"Hello {request.user.first_name},\n\nThank you for your donation of {units} units. You are a hero!\n\nYou can donate again after 90 days.",
+                    settings.DEFAULT_FROM_EMAIL,
+                    [request.user.email]
+                )
+            except: pass
 
         return redirect('my_donations')
 
     return render(request, 'add_donation.html', {
-        'blood_groups': blood_groups
+        'blood_groups': blood_groups,
+        'donor': donor
     })
 
 
@@ -42,7 +102,13 @@ def add_donation(request):
 # ===================================
 @login_required
 def my_donations(request):
-    donor = Donor.objects.get(user=request.user)
+    if request.user.role != 'DONOR':
+        return redirect('dashboard')
+    try:
+        donor = Donor.objects.get(user=request.user)
+    except Donor.DoesNotExist:
+        messages.error(request, "Donor profile not found.")
+        return redirect('dashboard')
     donations = Donation.objects.filter(donor=donor)
 
     return render(request, 'my_donations.html', {
@@ -60,6 +126,7 @@ def request_blood(request):
     if request.method == 'POST':
         blood_group_id = request.POST.get('blood_group')
         units_required = request.POST.get('units_required')
+        urgency = request.POST.get('urgency', 'NORMAL')
 
         if not blood_group_id or not units_required:
             return render(request, 'request_blood.html', {
@@ -71,7 +138,8 @@ def request_blood(request):
             user=request.user,
             blood_group_id=int(blood_group_id),
             units_required=int(units_required),
-            status='PENDING'   # ✅ MUST MATCH MODEL
+            urgency=urgency,
+            status='PENDING'
         )
 
         return redirect('dashboard')
@@ -114,10 +182,48 @@ def admin_requests(request):
         if action == "approve":
             blood_request.status = "APPROVED"
             blood_request.save()
+            
+            # Notification
+            Notification.objects.create(
+                user=blood_request.user,
+                title="Blood Request Approved",
+                message=f"Your request for {blood_request.units_required} units of {blood_request.blood_group} has been approved.",
+                notif_type="success"
+            )
+            # Email
+            if blood_request.user.email:
+                try:
+                    send_mail(
+                        "Blood Bank - Request Approved",
+                        f"Hello {blood_request.user.first_name},\n\nYour blood request for {blood_request.units_required} units of {blood_request.blood_group} has been approved.",
+                        settings.DEFAULT_FROM_EMAIL,
+                        [blood_request.user.email]
+                    )
+                except: pass
 
         elif action == "reject":
+            reason = request.POST.get('rejection_reason', '')
             blood_request.status = "REJECTED"
+            blood_request.rejection_reason = reason
             blood_request.save()
+
+            # Notification
+            Notification.objects.create(
+                user=blood_request.user,
+                title="Blood Request Rejected",
+                message=f"Your request for {blood_request.units_required} units of {blood_request.blood_group} was rejected. Reason: {reason}",
+                notif_type="danger"
+            )
+            # Email
+            if blood_request.user.email:
+                try:
+                    send_mail(
+                        "Blood Bank - Request Rejected",
+                        f"Hello {blood_request.user.first_name},\n\nYour blood request was rejected.\nReason: {reason}",
+                        settings.DEFAULT_FROM_EMAIL,
+                        [blood_request.user.email]
+                    )
+                except: pass
 
         return redirect('admin_requests')
 
@@ -126,3 +232,31 @@ def admin_requests(request):
     return render(request, 'admin_requests.html', {
         'requests': requests
     })
+
+
+# ===================================
+# EXPORT REQUESTS CSV
+# ===================================
+@login_required
+def export_requests_csv(request):
+    if not request.user.is_staff:
+        return redirect('dashboard')
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="blood_requests.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(['Requester', 'Blood Group', 'Units', 'Urgency', 'Status', 'Date'])
+
+    blood_requests = BloodRequest.objects.all().select_related('user', 'blood_group').order_by('-request_date')
+    for req in blood_requests:
+        writer.writerow([
+            req.user.username,
+            req.blood_group.blood_group,
+            req.units_required,
+            req.urgency,
+            req.status,
+            req.request_date.strftime("%Y-%m-%d %H:%M")
+        ])
+
+    return response

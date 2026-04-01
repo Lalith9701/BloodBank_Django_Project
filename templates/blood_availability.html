@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}Blood Availability | Blood Bank{% endblock %}
+
+{% block content %}
+<div class="text-center mb-5 mt-3">
+    <h1 class="fw-bold text-dark" style="font-size: 3rem;">Live <span class="text-primary">Blood Availability</span></h1>
+    <p class="text-muted fs-5">Real-time stock status across all blood groups.</p>
+</div>
+
+<div class="row g-4 justify-content-center mb-5">
+    {% for stock in stocks %}
+    <div class="col-md-3">
+        <div class="premium-card text-center p-4 h-100 border-top border-4 shadow-hover" 
+             style="border-top-color: {% if stock.units_available < 5 %}#dc3545{% elif stock.units_available < 20 %}#ffc107{% else %}#198754{% endif %} !important;">
+            <div class="display-1 fw-bold mb-2" style="color: var(--primary);">{{ stock.blood_group.blood_group }}</div>
+            <div class="h3 fw-bold mb-3 text-dark">{{ stock.units_available }} <span class="fs-6 text-muted text-uppercase">Units</span></div>
+            
+            {% if stock.units_available < 5 %}
+                <span class="badge bg-danger px-3 py-2 rounded-pill"><i class="bi bi-exclamation-triangle-fill me-1"></i> Critical Stock</span>
+            {% elif stock.units_available < 20 %}
+                <span class="badge bg-warning text-dark px-3 py-2 rounded-pill"><i class="bi bi-info-circle-fill me-1"></i> Low Stock</span>
+            {% else %}
+                <span class="badge bg-success px-3 py-2 rounded-pill"><i class="bi bi-check-circle-fill me-1"></i> Available</span>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="premium-card bg-light border-0 p-5 text-center mt-5">
+    <h3 class="fw-bold mb-3">Need Blood Urgently?</h3>
+    <p class="text-muted mb-4 fs-5">Register or login to submit an emergency blood request. Our donors are ready to help.</p>
+    <div class="d-flex justify-content-center gap-3">
+        <a href="{% url 'register' %}" class="btn btn-primary-custom btn-lg px-5 shadow-sm">Register Now</a>
+        <a href="{% url 'login' %}" class="btn btn-outline-primary btn-lg px-5 shadow-sm">Login to Request</a>
+    </div>
+</div>
+{% endblock %}

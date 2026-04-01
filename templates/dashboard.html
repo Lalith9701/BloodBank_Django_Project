@@ -1,158 +1,96 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard | Blood Bank</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-    <style>
-        body {
-            background-color: #f8f9fa; 
-        }
-        .navbar-brand {
-            font-weight: bold;
-            letter-spacing: 1px;
-        }
-        /* Interactive Dashboard Cards */
-        .dash-card {
-            border: none;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            background-color: white;
-            text-decoration: none;
-            color: inherit;
-        }
-        .dash-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 15px rgba(220, 53, 69, 0.15);
-            color: inherit;
-        }
-        .icon-circle {
-            width: 70px;
-            height: 70px;
-            border-radius: 50%;
-            background-color: #ffe5e8;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 15px;
-        }
-        /* Style for plain text links converted to cards */
-        .dash-card-disabled {
-            cursor: pointer;
-        }
-    </style>
-</head>
-<body>
+{% extends 'base.html' %}
+{% block title %}Dashboard | Blood Bank{% endblock %}
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-danger shadow-sm">
-        <div class="container">
-            <a class="navbar-brand" href="#">
-                <i class="bi bi-droplet-fill me-2"></i>Blood Bank Management
-            </a>
-            <div class="ms-auto">
-                <a href="{% url 'logout' %}" class="btn btn-sm btn-light text-danger fw-bold">
-                    <i class="bi bi-box-arrow-right me-1"></i> Logout
-                </a>
-            </div>
-        </div>
-    </nav>
-
-    <div class="container mt-5">
-        
-        <div class="row mb-5 align-items-center">
-            <div class="col-md-8">
-                <h2 class="text-dark fw-bold mb-1">
-                    Welcome back, <span class="text-danger">{{ request.user.username }}</span>!
-                </h2>
-                <p class="text-muted fs-5 mb-0">
-                    Logged in as: 
-                    <span class="badge bg-danger ms-1 px-3 py-2 rounded-pill shadow-sm">
-                        <i class="bi bi-person-badge me-1"></i> {{ role|title }}
-                    </span>
-                </p>
-            </div>
-        </div>
-
-        <h4 class="text-muted fw-semibold mb-4">Quick Actions</h4>
-        <div class="row g-4 mb-5">
-            
-            {% if role == 'admin' %}
-                <div class="col-md-4">
-                    <a href="/inventory/stock/" class="dash-card d-block text-center p-4 h-100">
-                        <div class="icon-circle">
-                            <i class="bi bi-moisture text-danger fs-1"></i>
-                        </div>
-                        <h5 class="fw-bold">Manage Blood Stock</h5>
-                        <p class="text-muted small mb-0">Update inventory and add new blood groups.</p>
-                    </a>
-                </div>
-                <div class="col-md-4">
-                    <a href="/requests/admin/" class="dash-card d-block text-center p-4 h-100">
-                        <div class="icon-circle">
-                            <i class="bi bi-clipboard2-check-fill text-danger fs-1"></i>
-                        </div>
-                        <h5 class="fw-bold">Approve Requests</h5>
-                        <p class="text-muted small mb-0">Review pending blood requests from patients.</p>
-                    </a>
-                </div>
-                <div class="col-md-4">
-                    <a href="/admin/" class="dash-card d-block text-center p-4 h-100">
-                        <div class="icon-circle">
-                            <i class="bi bi-shield-lock-fill text-danger fs-1"></i>
-                        </div>
-                        <h5 class="fw-bold">Admin Panel</h5>
-                        <p class="text-muted small mb-0">Access backend Django admin settings.</p>
-                    </a>
-                </div>
-
-            {% elif role == 'donor' %}
-                <div class="col-md-6">
-                    <a href="#" class="dash-card d-block text-center p-4 h-100">
-                        <div class="icon-circle">
-                            <i class="bi bi-calendar2-check-fill text-danger fs-1"></i>
-                        </div>
-                        <h5 class="fw-bold">Update Availability</h5>
-                        <p class="text-muted small mb-0">Let us know when you are ready to donate next.</p>
-                    </a>
-                </div>
-                <div class="col-md-6">
-                    <a href="#" class="dash-card d-block text-center p-4 h-100">
-                        <div class="icon-circle">
-                            <i class="bi bi-clock-history text-danger fs-1"></i>
-                        </div>
-                        <h5 class="fw-bold">View Donation History</h5>
-                        <p class="text-muted small mb-0">Track your past life-saving donations.</p>
-                    </a>
-                </div>
-
-            {% else %}
-                <div class="col-md-6">
-                    <a href="/requests/request/" class="dash-card d-block text-center p-4 h-100">
-                        <div class="icon-circle">
-                            <i class="bi bi-heart-pulse-fill text-danger fs-1"></i>
-                        </div>
-                        <h5 class="fw-bold">Request Blood</h5>
-                        <p class="text-muted small mb-0">Submit a formal request for blood units.</p>
-                    </a>
-                </div>
-                <div class="col-md-6">
-                    <a href="/requests/my-requests/" class="dash-card d-block text-center p-4 h-100">
-                        <div class="icon-circle">
-                            <i class="bi bi-card-list text-danger fs-1"></i>
-                        </div>
-                        <h5 class="fw-bold">My Requests</h5>
-                        <p class="text-muted small mb-0">Check the approval status of your past requests.</p>
-                    </a>
-                </div>
-            {% endif %}
-
-        </div>
-
+{% block content %}
+<div class="row mb-5 align-items-center mt-3">
+    <div class="col-md-8">
+        <h2 class="text-dark fw-bold mb-2" style="font-size: 2.5rem;">
+            Welcome back, <span style="color: var(--primary);">{{ request.user.get_full_name|default:request.user.username }}</span>!
+        </h2>
+        <p class="text-muted fs-5 mb-0 d-flex align-items-center">
+            Role: 
+            <span class="badge bg-white text-dark shadow-sm ms-2 px-3 py-2 rounded-pill border">
+                <i class="bi bi-person-badge text-primary me-1"></i> {{ role|title|default:"User" }}
+            </span>
+        </p>
     </div>
+</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+<h4 class="text-secondary fw-bold mb-4 d-flex align-items-center">
+    <i class="bi bi-lightning-charge-fill me-2" style="color: #f59e0b;"></i> Quick Actions
+</h4>
+
+<div class="row g-4 mb-5">
+    
+    {% if role == 'admin' %}
+        <div class="col-md-4">
+            <a href="/inventory/stock/" class="dash-card">
+                <div class="icon-wrapper">
+                    <i class="bi bi-droplet-fill"></i>
+                </div>
+                <h4>Manage Stock</h4>
+                <p>Update inventory and adjust blood group levels securely.</p>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="/requests/admin/" class="dash-card">
+                <div class="icon-wrapper">
+                    <i class="bi bi-clipboard-check-fill"></i>
+                </div>
+                <h4>Approve Requests</h4>
+                <p>Review and process pending blood unit requests.</p>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="/admin/" class="dash-card">
+                <div class="icon-wrapper">
+                    <i class="bi bi-shield-lock-fill"></i>
+                </div>
+                <h4>Admin Panel</h4>
+                <p>Access advanced system settings and manage users.</p>
+            </a>
+        </div>
+
+    {% elif role == 'donor' %}
+        <div class="col-md-6">
+            <a href="#" class="dash-card">
+                <div class="icon-wrapper">
+                    <i class="bi bi-calendar2-heart-fill"></i>
+                </div>
+                <h4>Update Availability</h4>
+                <p>Log your donation readiness to save lives promptly.</p>
+            </a>
+        </div>
+        <div class="col-md-6">
+            <a href="#" class="dash-card">
+                <div class="icon-wrapper">
+                    <i class="bi bi-clock-history"></i>
+                </div>
+                <h4>Donation History</h4>
+                <p>Review your profound impact through past donations.</p>
+            </a>
+        </div>
+
+    {% else %}
+        <div class="col-md-6">
+            <a href="/requests/request/" class="dash-card">
+                <div class="icon-wrapper">
+                    <i class="bi bi-heart-pulse-fill"></i>
+                </div>
+                <h4>Request Blood</h4>
+                <p>Submit an emergency or routine request for blood units.</p>
+            </a>
+        </div>
+        <div class="col-md-6">
+            <a href="/requests/my-requests/" class="dash-card">
+                <div class="icon-wrapper">
+                    <i class="bi bi-card-list"></i>
+                </div>
+                <h4>My Requests</h4>
+                <p>View the real-time approval status of your past requests.</p>
+            </a>
+        </div>
+    {% endif %}
+
+</div>
+{% endblock %}

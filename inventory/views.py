@@ -39,3 +39,11 @@ def add_blood_stock(request):
 
     groups = BloodGroup.objects.all()
     return render(request, 'add_blood_stock.html', {'groups': groups})
+
+
+# =========================
+# PUBLIC AVAILABILITY
+# =========================
+def blood_availability(request):
+    stocks = BloodStock.objects.select_related('blood_group').all()
+    return render(request, 'blood_availability.html', {'stocks': stocks})

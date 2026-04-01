@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% block title %}Approve Health Issues | Blood Bank{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 mt-3">
+    <h2 class="fw-bold mb-0" style="color: var(--secondary); font-size: 2.2rem;">
+        <i class="bi bi-heart-pulse-fill me-2" style="color: var(--primary);"></i>Health Approvals
+    </h2>
+    <a href="{% url 'dashboard' %}" class="btn btn-secondary-custom shadow-sm">
+        <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
+    </a>
+</div>
+
+<div class="premium-card mb-5 border-0">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-premium table-borderless align-middle text-center mb-0">
+                <thead>
+                    <tr>
+                        <th>Donor Name</th>
+                        <th>Blood Group</th>
+                        <th>Health Issue Details</th>
+                        <th>Current Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+                    {% for donor in pending_donors %}
+                    <tr>
+                        <td class="fw-semibold" style="color: var(--secondary);">
+                            <div class="d-flex align-items-center justify-content-center">
+                                <i class="bi bi-person-badge fs-5 me-2" style="color: var(--primary-light);"></i> 
+                                {{ donor.user.get_full_name|default:donor.user.username }}
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-light border fs-6 px-3 py-2 rounded-pill shadow-sm" style="color: var(--primary);">
+                                {{ donor.blood_group.blood_group }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="text-muted small text-start p-2 border rounded bg-light" style="max-width: 300px; max-height: 80px; overflow-y: auto;">
+                                {{ donor.health_issue_description|default:"No details provided." }}
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-warning text-dark px-3 py-2 rounded-pill shadow-sm">
+                                <i class="bi bi-hourglass-split me-1"></i> Pending
+                            </span>
+                        </td>
+                        
+                        <td>
+                            <div class="d-flex justify-content-center gap-2">
+                                <form method="POST" action="" class="m-0 p-0">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="donor_id" value="{{ donor.id }}">
+                                    <input type="hidden" name="action" value="approve">
+                                    <button type="submit" class="btn btn-sm btn-success fw-bold shadow-sm rounded-pill px-3">
+                                        <i class="bi bi-check-lg me-1"></i> Approve
+                                    </button>
+                                </form>
+
+                                <form method="POST" action="" class="m-0 p-0">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="donor_id" value="{{ donor.id }}">
+                                    <input type="hidden" name="action" value="reject">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger fw-bold shadow-sm rounded-pill px-3 bg-white">
+                                        <i class="bi bi-x-lg me-1"></i> Reject
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-5">
+                            <i class="bi bi-heart fs-1 d-block mb-3" style="color: var(--primary-glare);"></i>
+                            <h5 class="fw-bold mb-1">No pending health approvals.</h5>
+                            <p class="mb-0 small">When donors register with health issues, they will appear here for review.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

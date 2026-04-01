@@ -1,193 +1,539 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Donor Registration | Blood Bank Management</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-    <style>
-        body {
-            background-color: #f8f9fa; 
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
-        .navbar-brand {
-            font-weight: bold;
-            letter-spacing: 1px;
-        }
-        .register-card {
-            border: none;
-            border-radius: 12px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.08); 
-            background-color: white;
-            overflow: hidden;
-        }
-        .register-header {
-            background-color: #ffe5e8; /* Soft red */
-            padding: 30px 20px 20px;
-            text-align: center;
-            border-bottom: 2px solid #ffccd2;
-        }
-        .icon-circle {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background-color: #dc3545;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 15px;
-            font-size: 1.5rem;
-        }
-        .btn-blood {
-            background-color: #dc3545; 
-            color: white;
-            transition: 0.3s;
-        }
-        .btn-blood:hover {
-            background-color: #bb2d3b;
-            color: white;
-        }
-        /* Style adjustments for labels */
-        .form-label {
-            font-size: 0.9rem;
-            margin-bottom: 0.3rem;
-        }
-    </style>
-</head>
-<body>
+{% extends 'base.html' %}
+{% block title %}Donor Registration | Blood Bank Management{% endblock %}
 
-    <nav class="navbar navbar-dark bg-danger shadow-sm">
-        <div class="container justify-content-center">
-            <span class="navbar-brand mb-0 h1 fs-4">
-                <i class="bi bi-droplet-fill me-2"></i>Blood Bank Management
-            </span>
+{% block content %}
+<div class="row justify-content-center align-items-center py-4">
+    <div class="col-12 col-md-10 col-lg-8">
+        <div class="premium-card">
+
+            <div class="premium-card-header flex-column text-center pb-2 border-0" style="background: transparent;">
+                <div class="icon-circle mb-3 border border-2 shadow-sm"
+                    style="width: 75px; height: 75px; border-radius: 50%; background-color: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 2.2rem; margin: 0 auto; border-color: white !important;">
+                    <i class="bi bi-person-lines-fill"></i>
+                </div>
+                <h3 class="fw-bold mb-0" style="color: var(--secondary);">Register as a Donor</h3>
+                <p class="text-muted small mt-2">Join us to save lives. Please fill in your details below.</p>
+            </div>
+
+            <div class="card-body p-4 p-sm-5 pt-2">
+                {% if field_errors %}
+                    <div class="alert alert-danger border-0 shadow-sm d-flex align-items-start mb-4" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill flex-shrink-0 me-3 text-danger fs-5 mt-1"></i>
+                        <div>
+                            <div class="fw-bold mb-1">Please fix the following errors:</div>
+                            <ul class="mb-0 ps-3 small">
+                                {% for field, msg in field_errors.items %}
+                                    {% if msg|length > 1 and msg != msg|slice:":1" %}
+                                        {% for m in msg %}<li>{{ m }}</li>{% endfor %}
+                                    {% else %}
+                                        <li>{{ msg }}</li>
+                                    {% endif %}
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                {% endif %}
+                <form method="post">
+                    {% csrf_token %}
+
+                    <!-- ROW 1: Name -->
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-6">
+                            <label for="full_name" class="form-label text-muted fw-bold small text-uppercase" style="letter-spacing: 0.5px;">Full Name</label>
+                            <input type="text" class="form-control border-0 bg-light shadow-sm py-2 {% if field_errors.full_name %}is-invalid{% endif %}"
+                                id="full_name" name="full_name"
+                                value="{{ form_data.full_name|default:'' }}"
+                                placeholder="John Doe" required>
+                            {% if field_errors.full_name %}
+                                <div class="invalid-feedback d-block small">
+                                    <i class="bi bi-exclamation-circle-fill me-1"></i>{{ field_errors.full_name }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="email" class="form-label text-muted fw-bold small text-uppercase" style="letter-spacing: 0.5px;">Email Address</label>
+                            <input type="email" class="form-control border-0 bg-light shadow-sm py-2 {% if field_errors.email %}is-invalid{% endif %}"
+                                id="email" name="email"
+                                value="{{ form_data.email|default:'' }}"
+                                placeholder="john@example.com" required>
+                            {% if field_errors.email %}
+                                <div class="invalid-feedback d-block small">
+                                    <i class="bi bi-exclamation-circle-fill me-1"></i>{{ field_errors.email }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- ROW 2: Phone & Password -->
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-6">
+                            <label for="phone" class="form-label text-muted fw-bold small text-uppercase">Phone Number (Login ID)</label>
+                            <div class="input-group shadow-sm" style="border-radius: 8px; overflow: hidden;">
+                                <span class="input-group-text border-0 bg-light text-muted"><i class="bi bi-telephone"></i></span>
+                                <input type="tel" class="form-control border-0 ps-2 bg-light {% if field_errors.phone %}is-invalid{% endif %}"
+                                    id="phone" name="phone"
+                                    value="{{ form_data.phone|default:'' }}"
+                                    placeholder="Enter your phone number" required>
+                            </div>
+                            {% if field_errors.phone %}
+                                <div class="text-danger small mt-1">
+                                    <i class="bi bi-exclamation-circle-fill me-1"></i>{{ field_errors.phone }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="password" class="form-label text-muted fw-bold small text-uppercase">Password</label>
+                            <div class="input-group shadow-sm" style="border-radius: 8px; overflow: hidden;">
+                                <span class="input-group-text border-0 bg-light text-muted"><i class="bi bi-key"></i></span>
+                                <input type="password" class="form-control border-0 ps-2 bg-light {% if field_errors.password %}is-invalid{% endif %}"
+                                    id="password" name="password"
+                                    placeholder="Create a secure password" required autocomplete="new-password">
+                            </div>
+
+                            <!-- Strength bar -->
+                            <div class="mt-2" id="strength-bar-wrap" style="display:none;">
+                                <div style="height:5px;border-radius:4px;background:var(--border-color);overflow:hidden;">
+                                    <div id="strength-bar" style="height:100%;width:0%;transition:width .3s,background .3s;border-radius:4px;"></div>
+                                </div>
+                                <small id="strength-label" class="fw-semibold mt-1 d-block" style="font-size:0.75rem;"></small>
+                            </div>
+
+                            <!-- Live checklist -->
+                            <ul class="list-unstyled mt-2 mb-0" id="pw-checklist" style="font-size:0.78rem;display:none;">
+                                <li id="chk-len"   class="text-muted"><i class="bi bi-circle me-1"></i>At least 8 characters</li>
+                                <li id="chk-upper" class="text-muted"><i class="bi bi-circle me-1"></i>One uppercase letter</li>
+                                <li id="chk-lower" class="text-muted"><i class="bi bi-circle me-1"></i>One lowercase letter</li>
+                                <li id="chk-digit" class="text-muted"><i class="bi bi-circle me-1"></i>One digit (0–9)</li>
+                                <li id="chk-spec"  class="text-muted"><i class="bi bi-circle me-1"></i>One special character (!@#$%^&*…)</li>
+                            </ul>
+
+                            {% if field_errors.password %}
+                            <div class="mt-2">
+                                {% for e in field_errors.password %}
+                                <div class="text-danger small"><i class="bi bi-x-circle-fill me-1"></i>{{ e }}</div>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Confirm Password -->
+                        <div class="col-md-6 offset-md-6">
+                            <label for="confirm_password" class="form-label text-muted fw-bold small text-uppercase">Confirm Password</label>
+                            <div class="input-group shadow-sm" style="border-radius: 8px; overflow: hidden;">
+                                <span class="input-group-text border-0 bg-light text-muted"><i class="bi bi-key-fill"></i></span>
+                                <input type="password" class="form-control border-0 ps-2 bg-light {% if field_errors.confirm_password %}is-invalid{% endif %}"
+                                    id="confirm_password" name="confirm_password"
+                                    placeholder="Re-enter your password" required autocomplete="new-password">
+                            </div>
+                            <div id="confirm-msg" class="form-text small mt-1">
+                                {% if field_errors.confirm_password %}
+                                    <span class="text-danger"><i class="bi bi-x-circle-fill me-1"></i>{{ field_errors.confirm_password }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-6">
+                            <label for="blood_group" class="form-label text-muted fw-semibold small text-uppercase"
+                                style="letter-spacing: 0.5px;">Blood Group</label>
+                            <div class="input-group shadow-sm" style="border-radius: 8px; overflow: hidden;">
+                                <span class="input-group-text border-0 bg-light text-danger"><i
+                                        class="bi bi-droplet-fill"></i></span>
+                                <select name="blood_group" id="blood_group" class="form-select border-0 ps-2 bg-light"
+                                    required>
+                                    <option value="" disabled selected>-- Select Blood Group --</option>
+                                    {% for group in blood_groups %}
+                                    <option value="{{ group.id }}">{{ group.blood_group }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="age" class="form-label text-muted fw-semibold small text-uppercase"
+                                style="letter-spacing: 0.5px;">Age</label>
+                            <div class="input-group shadow-sm" style="border-radius: 8px; overflow: hidden;">
+                                <span class="input-group-text border-0 bg-light"><i
+                                        class="bi bi-calendar-event text-muted"></i></span>
+                                <input type="number" class="form-control border-0 ps-2 bg-light" id="age" name="age"
+                                    placeholder="e.g., 25" min="18" required>
+                            </div>
+                            <div class="form-text small mt-1">Must be at least 18 years old to donate.</div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="gender" class="form-label text-muted fw-semibold small text-uppercase"
+                                style="letter-spacing: 0.5px;">Gender</label>
+                            <div class="input-group shadow-sm" style="border-radius: 8px; overflow: hidden;">
+                                <span class="input-group-text border-0 bg-light"><i
+                                        class="bi bi-gender-ambiguous text-muted"></i></span>
+                                <select name="gender" id="gender" class="form-select border-0 ps-2 bg-light" required>
+                                    <option value="" disabled selected>-- Select Gender --</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- ROW 4: Weight & Health Issues -->
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-6">
+                            <label for="weight" class="form-label text-muted fw-bold small text-uppercase">Weight
+                                (kg)</label>
+                            <div class="input-group shadow-sm" style="border-radius: 8px; overflow: hidden;">
+                                <span class="input-group-text border-0 bg-light text-muted"><i
+                                        class="bi bi-speedometer2"></i></span>
+                                <input type="number" step="0.1" class="form-control border-0 ps-2 bg-light" id="weight"
+                                    name="weight" placeholder="e.g., 65" min="45" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="health_issue" class="form-label text-muted fw-bold small text-uppercase">Any
+                                ongoing health issues?</label>
+                            <div class="input-group shadow-sm" style="border-radius: 8px; overflow: hidden;">
+                                <span class="input-group-text border-0 bg-light text-muted"><i
+                                        class="bi bi-heart-pulse"></i></span>
+                                <select name="health_issue" id="health_issue" class="form-select border-0 ps-2 bg-light"
+                                    required>
+                                    <option value="False">No, I am healthy</option>
+                                    <option value="True">Yes, I have health Issues</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Health Issue Description (Hidden by default) -->
+                    <div class="row g-4 mb-4" id="health_issue_desc_container" style="display: none;">
+                        <div class="col-12">
+                            <label for="health_issue_description"
+                                class="form-label text-danger fw-bold small text-uppercase"><i
+                                    class="bi bi-exclamation-triangle-fill me-1"></i> Please describe your health
+                                condition</label>
+                            <textarea class="form-control border bg-light shadow-sm" id="health_issue_description"
+                                name="health_issue_description" rows="3"
+                                placeholder="Briefly describe any chronic illnesses, recent surgeries, medications, etc..."
+                                style="border-radius: 8px; border-color: #f8d7da !important;"></textarea>
+                            <div class="form-text small mt-1 text-muted">This information is strictly confidential and
+                                is required for donor eligibility assessment.</div>
+                        </div>
+                    </div>
+
+                    <h5 class="fw-bold text-dark mt-5 mb-3 border-bottom pb-2" style="font-size: 1.1rem;">
+                        <i class="bi bi-shield-lock-fill text-primary me-2"></i> Security Question
+                    </h5>
+                    <p class="text-muted small mb-3">This will be used to verify your identity if you forget your password.</p>
+
+                    <div class="row g-4 mb-4">
+                        <div class="col-12">
+                            <label for="security_question" class="form-label text-muted fw-bold small text-uppercase">Choose a Security Question</label>
+                            <div class="input-group shadow-sm" style="border-radius:8px;overflow:hidden;">
+                                <span class="input-group-text border-0 bg-light text-muted"><i class="bi bi-patch-question-fill"></i></span>
+                                <select name="security_question" id="security_question"
+                                    class="form-select border-0 ps-2 bg-light {% if field_errors.security_question %}is-invalid{% endif %}" required>
+                                    <option value="" disabled {% if not form_data.security_question %}selected{% endif %}>-- Select a question --</option>
+                                    {% for key, text in security_questions %}
+                                    <option value="{{ key }}" {% if form_data.security_question == key %}selected{% endif %}>{{ text }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            {% if field_errors.security_question %}
+                                <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle-fill me-1"></i>{{ field_errors.security_question }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-12">
+                            <label for="security_answer" class="form-label text-muted fw-bold small text-uppercase">Your Answer</label>
+                            <div class="input-group shadow-sm" style="border-radius:8px;overflow:hidden;">
+                                <span class="input-group-text border-0 bg-light text-muted"><i class="bi bi-chat-square-text-fill"></i></span>
+                                <input type="text" class="form-control border-0 ps-2 bg-light {% if field_errors.security_answer %}is-invalid{% endif %}"
+                                    id="security_answer" name="security_answer"
+                                    value="{{ form_data.security_answer|default:'' }}"
+                                    placeholder="Your answer (case-insensitive)" required autocomplete="off">
+                            </div>
+                            {% if field_errors.security_answer %}
+                                <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle-fill me-1"></i>{{ field_errors.security_answer }}</div>
+                            {% else %}
+                                <div class="form-text small mt-1">Answer is stored securely and is not case-sensitive.</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <h5 class="fw-bold text-dark mt-4 mb-3 border-bottom pb-2" style="font-size: 1.1rem;">
+                        <i class="bi bi-geo-alt-fill text-primary me-2"></i> Location Details
+                    </h5>
+
+                    <!-- ROW 5: Address -->
+                    <div class="row g-4 mb-4">
+                        <div class="col-12">
+                            <label for="address" class="form-label text-muted fw-bold small text-uppercase">Street
+                                Address / Locality</label>
+                            <div class="input-group shadow-sm" style="border-radius: 8px; overflow: hidden;">
+                                <span class="input-group-text border-0 bg-light text-muted"><i
+                                        class="bi bi-house-door"></i></span>
+                                <input type="text" class="form-control border-0 ps-2 bg-light" id="address"
+                                    name="address" placeholder="Enter your full address" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ROW 6: Pincode & City -->
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-6">
+                            <label for="pincode"
+                                class="form-label text-muted fw-bold small text-uppercase">Pincode</label>
+                            <div class="input-group shadow-sm" style="border-radius: 8px; overflow: hidden;">
+                                <span class="input-group-text border-0 bg-light text-muted"><i
+                                        class="bi bi-pin-map"></i></span>
+                                <input type="text" class="form-control border-0 ps-2 bg-light" id="pincode"
+                                    name="pincode" placeholder="e.g., 400001" maxlength="6" required>
+                            </div>
+                            <small id="pincode-status" class="text-primary mt-1 d-block"
+                                style="font-size: 0.8rem; display: none;"></small>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="city" class="form-label text-muted fw-bold small text-uppercase">City /
+                                District</label>
+                            <div class="input-group shadow-sm" style="border-radius: 8px; overflow: hidden;">
+                                <span class="input-group-text border-0 bg-light text-muted"><i
+                                        class="bi bi-building"></i></span>
+                                <input type="text" class="form-control border-0 ps-2 bg-light" id="city" name="city"
+                                    placeholder="Auto-filled city" readonly required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ROW 7: State & Nation -->
+                    <div class="row g-4 mb-5">
+                        <div class="col-md-6">
+                            <label for="state" class="form-label text-muted fw-bold small text-uppercase">State</label>
+                            <div class="input-group shadow-sm" style="border-radius: 8px; overflow: hidden;">
+                                <span class="input-group-text border-0 bg-light text-muted"><i
+                                        class="bi bi-map"></i></span>
+                                <input type="text" class="form-control border-0 ps-2 bg-light" id="state" name="state"
+                                    placeholder="Auto-filled state" readonly required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="nation"
+                                class="form-label text-muted fw-bold small text-uppercase">Nation</label>
+                            <div class="input-group shadow-sm" style="border-radius: 8px; overflow: hidden;">
+                                <span class="input-group-text border-0 bg-light text-muted"><i
+                                        class="bi bi-globe"></i></span>
+                                <input type="text" class="form-control border-0 ps-2 bg-light" id="nation" name="nation"
+                                    placeholder="Auto-filled nation" readonly required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid mt-2">
+                        <button type="submit" class="btn btn-primary-custom btn-lg shadow-hover fw-bold shadow-sm"
+                            style="border-radius: 8px;">
+                            <i class="bi bi-check-circle me-2"></i> Register as Donor
+                        </button>
+                    </div>
+                </form>
+
+                <div class="text-center mt-5 pt-3 border-top">
+                    <p class="text-muted mb-0 small">
+                        Already have an account?
+                        <a href="{% url 'login' %}" class="fw-bold text-decoration-none ms-1"
+                            style="color: var(--primary);">
+                            Login here
+                        </a>
+                    </p>
+                </div>
+            </div>
         </div>
-    </nav>
-
-    <div class="container flex-grow-1 d-flex justify-content-center align-items-center py-5">
-        <div class="col-12 col-md-10 col-lg-8">
-            
-            <div class="register-card">
-                
-                <div class="register-header">
-                    <div class="icon-circle shadow-sm">
-                        <i class="bi bi-person-lines-fill"></i>
-                    </div>
-                    <h3 class="text-danger fw-bold mb-0">Register as a Donor</h3>
-                    <p class="text-muted small mb-0 mt-2">Join us to save lives. Please fill in your details below.</p>
-                </div>
-                
-                <div class="card-body p-4 p-sm-5 pt-4">
-                    
-                    <form method="post">
-                        {% csrf_token %}
-                        
-                        <div class="row g-4 mb-4">
-                            
-                            <div class="col-md-6">
-                                <label for="username" class="form-label text-muted fw-semibold">Username</label>
-                                <div class="input-group shadow-sm">
-                                    <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-person"></i></span>
-                                    <input type="text" class="form-control border-start-0 ps-0" id="username" name="username" placeholder="Choose a username" required>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label for="password" class="form-label text-muted fw-semibold">Password</label>
-                                <div class="input-group shadow-sm">
-                                    <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-key"></i></span>
-                                    <input type="password" class="form-control border-start-0 ps-0" id="password" name="password" placeholder="Create a secure password" required>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label for="phone" class="form-label text-muted fw-semibold">Phone Number</label>
-                                <div class="input-group shadow-sm">
-                                    <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-telephone"></i></span>
-                                    <input type="tel" class="form-control border-start-0 ps-0" id="phone" name="phone" placeholder="Enter your phone number" required>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label for="blood_group" class="form-label text-muted fw-semibold">Blood Group</label>
-                                <div class="input-group shadow-sm">
-                                    <span class="input-group-text bg-light text-danger border-end-0"><i class="bi bi-droplet-fill"></i></span>
-                                    <select name="blood_group" id="blood_group" class="form-select border-start-0 ps-0" required>
-                                        <option value="" disabled selected>-- Select Blood Group --</option>
-                                        {% for group in blood_groups %}
-                                            <option value="{{ group.id }}">{{ group.blood_group }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label for="age" class="form-label text-muted fw-semibold">Age</label>
-                                <div class="input-group shadow-sm">
-                                    <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-calendar-event"></i></span>
-                                    <input type="number" class="form-control border-start-0 ps-0" id="age" name="age" placeholder="e.g., 25" min="18" required>
-                                </div>
-                                <div class="form-text small">Must be at least 18 years old to donate.</div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label for="gender" class="form-label text-muted fw-semibold">Gender</label>
-                                <div class="input-group shadow-sm">
-                                    <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-gender-ambiguous"></i></span>
-                                    <select name="gender" id="gender" class="form-select border-start-0 ps-0" required>
-                                        <option value="" disabled selected>-- Select Gender --</option>
-                                        <option value="Male">Male</option>
-                                        <option value="Female">Female</option>
-                                        <option value="Other">Other</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label for="weight" class="form-label text-muted fw-semibold">Weight (kg)</label>
-                                <div class="input-group shadow-sm">
-                                    <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-speedometer2"></i></span>
-                                    <input type="number" class="form-control border-start-0 ps-0" id="weight" name="weight" placeholder="e.g., 65" min="1" required>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label for="health_issue" class="form-label text-muted fw-semibold">Any ongoing health issues?</label>
-                                <div class="input-group shadow-sm">
-                                    <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-heart-pulse"></i></span>
-                                    <select name="health_issue" id="health_issue" class="form-select border-start-0 ps-0" required>
-                                        <option value="False" selected>No, I am healthy</option>
-                                        <option value="True">Yes</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                        </div>
-                        <div class="d-grid mt-2">
-                            <button type="submit" class="btn btn-blood btn-lg fw-bold shadow-sm">
-                                <i class="bi bi-check-circle me-1"></i> Register as Donor
-                            </button>
-                        </div>
-                    </form>
-
-                    <div class="text-center mt-4 pt-3 border-top">
-                        <p class="text-muted mb-0 small">
-                            Already have an account? 
-                            <a href="/" class="text-danger fw-bold text-decoration-none">
-                                Login here
-                            </a>
-                        </p>
-                    </div>
-
-                </div>
-            </div>
-            </div>
     </div>
+</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+<script>
+    // Health Issue Toggle Logic
+    document.getElementById('health_issue').addEventListener('change', function () {
+        const descContainer = document.getElementById('health_issue_desc_container');
+        const descTextarea = document.getElementById('health_issue_description');
+        if (this.value === 'True') {
+            descContainer.style.display = 'flex';
+            descTextarea.setAttribute('required', 'required');
+        } else {
+            descContainer.style.display = 'none';
+            descTextarea.removeAttribute('required');
+            descTextarea.value = '';
+        }
+    });
+
+    // ── Password strength & live checklist ──────────────────
+    const pwInput   = document.getElementById('password');
+    const confirmEl = document.getElementById('confirm_password');
+    const confirmMsg= document.getElementById('confirm-msg');
+    const barWrap   = document.getElementById('strength-bar-wrap');
+    const bar       = document.getElementById('strength-bar');
+    const label     = document.getElementById('strength-label');
+    const checklist = document.getElementById('pw-checklist');
+
+    const rules = [
+        { id: 'chk-len',   test: v => v.length >= 8 },
+        { id: 'chk-upper', test: v => /[A-Z]/.test(v) },
+        { id: 'chk-lower', test: v => /[a-z]/.test(v) },
+        { id: 'chk-digit', test: v => /\d/.test(v) },
+        { id: 'chk-spec',  test: v => /[!@#$%^&*()\-_=+\[\]{}|;:'",.<>?/`~\\]/.test(v) },
+    ];
+
+    const strengthLevels = [
+        { label: 'Very Weak', color: '#ef4444', width: '15%' },
+        { label: 'Weak',      color: '#f97316', width: '30%' },
+        { label: 'Fair',      color: '#eab308', width: '55%' },
+        { label: 'Good',      color: '#22c55e', width: '80%' },
+        { label: 'Strong',    color: '#16a34a', width: '100%' },
+    ];
+
+    pwInput.addEventListener('input', function () {
+        const val = this.value;
+        if (!val) {
+            barWrap.style.display = 'none';
+            checklist.style.display = 'none';
+            return;
+        }
+        barWrap.style.display = 'block';
+        checklist.style.display = 'block';
+
+        let passed = 0;
+        rules.forEach(r => {
+            const ok  = r.test(val);
+            const li  = document.getElementById(r.id);
+            const icon = ok ? 'bi-check-circle-fill' : 'bi-circle';
+            li.className = ok ? 'text-success' : 'text-muted';
+            li.innerHTML = `<i class="bi ${icon} me-1"></i>${li.textContent.trim()}`;
+            if (ok) passed++;
+        });
+
+        const lvl = Math.max(0, passed - 1);
+        bar.style.width     = strengthLevels[lvl].width;
+        bar.style.background= strengthLevels[lvl].color;
+        label.textContent   = strengthLevels[lvl].label;
+        label.style.color   = strengthLevels[lvl].color;
+
+        checkConfirm();
+    });
+
+    function checkConfirm() {
+        if (!confirmEl.value) { confirmMsg.textContent = ''; return; }
+        if (pwInput.value === confirmEl.value) {
+            confirmMsg.innerHTML = '<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>Passwords match</span>';
+        } else {
+            confirmMsg.innerHTML = '<span class="text-danger"><i class="bi bi-x-circle-fill me-1"></i>Passwords do not match</span>';
+        }
+    }
+    confirmEl.addEventListener('input', checkConfirm);
+
+    // Block submit if passwords don't match
+    document.querySelector('form').addEventListener('submit', function (e) {
+        if (pwInput.value !== confirmEl.value) {
+            e.preventDefault();
+            confirmMsg.innerHTML = '<span class="text-danger"><i class="bi bi-x-circle-fill me-1"></i>Passwords do not match</span>';
+            confirmEl.focus();
+        }
+    });
+    // ── Pincode Auto-fill Logic ──────────────────────────────
+    let pincodeTimer = null;
+
+    function setStatus(cls, html) {
+        const s = document.getElementById('pincode-status');
+        s.style.display = 'block';
+        s.className = cls + ' mt-1 d-block';
+        s.innerHTML = html;
+    }
+
+    function clearLocation() {
+        ['city','state','nation'].forEach(id => document.getElementById(id).value = '');
+    }
+
+    function fillLocation(city, state, country) {
+        document.getElementById('city').value   = city;
+        document.getElementById('state').value  = state;
+        document.getElementById('nation').value = country;
+    }
+
+    // Primary: postalpincode.in
+    function fetchPostalPincode(pin) {
+        return fetch(`https://api.postalpincode.in/pincode/${pin}`, { signal: AbortSignal.timeout(5000) })
+            .then(r => r.json())
+            .then(data => {
+                if (data && data[0] && data[0].Status === 'Success' && data[0].PostOffice.length) {
+                    const d = data[0].PostOffice[0];
+                    let city = d.District !== 'NA' ? d.District : d.Name;
+                    fillLocation(city, d.State, d.Country);
+                    return true;
+                }
+                return false;
+            });
+    }
+
+    // Fallback: India Post open data via Nominatim (OpenStreetMap)
+    function fetchNominatim(pin) {
+        const url = `https://nominatim.openstreetmap.org/search?postalcode=${pin}&country=India&format=json&addressdetails=1&limit=1`;
+        return fetch(url, {
+            headers: { 'Accept-Language': 'en' },
+            signal: AbortSignal.timeout(6000)
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data && data.length > 0) {
+                const a = data[0].address;
+                const city  = a.city || a.town || a.village || a.county || a.state_district || '';
+                const state = a.state || '';
+                const country = a.country || 'India';
+                if (city || state) {
+                    fillLocation(city, state, country);
+                    return true;
+                }
+            }
+            return false;
+        });
+    }
+
+    document.getElementById('pincode').addEventListener('input', function () {
+        const pin = this.value.trim();
+        clearTimeout(pincodeTimer);
+
+        if (!/^\d{6}$/.test(pin)) {
+            document.getElementById('pincode-status').style.display = 'none';
+            clearLocation();
+            return;
+        }
+
+        setStatus('text-primary', '<span class="spinner-border spinner-border-sm me-1"></span> Fetching location...');
+
+        // Debounce 400ms so we don't fire on every keystroke
+        pincodeTimer = setTimeout(() => {
+            fetchPostalPincode(pin)
+                .then(ok => ok ? ok : fetchNominatim(pin))
+                .then(ok => {
+                    if (ok) {
+                        setStatus('text-success', '<i class="bi bi-check-circle-fill me-1"></i> Location auto-filled!');
+                        setTimeout(() => document.getElementById('pincode-status').style.display = 'none', 3000);
+                    } else {
+                        clearLocation();
+                        setStatus('text-danger', '<i class="bi bi-exclamation-circle-fill me-1"></i> Pincode not found. Please fill manually.');
+                        // Unlock readonly fields so user can type manually
+                        ['city','state','nation'].forEach(id => {
+                            const el = document.getElementById(id);
+                            el.removeAttribute('readonly');
+                            el.placeholder = 'Enter manually';
+                        });
+                    }
+                })
+                .catch(() => {
+                    clearLocation();
+                    setStatus('text-danger', '<i class="bi bi-exclamation-circle-fill me-1"></i> Could not fetch. Please fill manually.');
+                    ['city','state','nation'].forEach(id => {
+                        const el = document.getElementById(id);
+                        el.removeAttribute('readonly');
+                        el.placeholder = 'Enter manually';
+                    });
+                });
+        }, 400);
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% block title %}My Profile | Blood Bank{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-4">
+    <div class="col-md-8">
+        <div class="premium-card mb-5">
+            <div class="premium-card-header text-center">
+                <i class="bi bi-person-circle display-1 text-primary mb-3"></i>
+                <h2 class="fw-bold mb-0 text-dark">My Profile</h2>
+                <p class="text-muted fs-5">Manage your personal information and location.</p>
+            </div>
+            
+            <div class="card-body p-4 p-sm-5">
+                <form method="POST" action="">
+                    {% csrf_token %}
+                    <h5 class="fw-bold text-secondary mb-4 border-bottom pb-2">Personal Information</h5>
+                    <div class="row g-4 mb-5">
+                        <div class="col-md-6">
+                            <label for="full_name" class="form-label text-muted fw-bold small text-uppercase">Full Name</label>
+                            <input type="text" name="full_name" id="full_name" value="{{ request.user.get_full_name|default:request.user.username }}" class="form-control border-0 bg-light shadow-sm py-2" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="email" class="form-label text-muted fw-bold small text-uppercase">Email Address</label>
+                            <input type="email" name="email" id="email" value="{{ request.user.email|default:'' }}" class="form-control border-0 bg-light shadow-sm py-2" placeholder="e.g., example@mail.com">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted fw-bold small text-uppercase">Phone (Username)</label>
+                            <input type="text" value="{{ request.user.username }}" class="form-control border-0 bg-light py-2" readonly disabled>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted fw-bold small text-uppercase">Account Type</label>
+                            <input type="text" value="{{ request.user.role|title|default:'Staff' }}" class="form-control border-0 bg-light py-2" readonly disabled>
+                        </div>
+                    </div>
+
+                    {% if donor %}
+                    <h5 class="fw-bold text-secondary mb-4 border-bottom pb-2">Donor & Location Details</h5>
+                    <div class="row g-4 mb-5">
+                        <div class="col-md-6">
+                            <label class="form-label text-muted fw-bold small text-uppercase">Blood Group</label>
+                            <input type="text" value="{{ donor.blood_group.blood_group }}" class="form-control border-0 bg-light py-2" readonly disabled>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted fw-bold small text-uppercase">Eligibility Status</label>
+                            <input type="text" value="{{ donor.eligibility_status }}" class="form-control border-0 bg-light py-2 fw-bold text-{% if donor.eligibility_status == 'ELIGIBLE' %}success{% else %}danger{% endif %}" readonly disabled>
+                        </div>
+                        <div class="col-12">
+                            <label for="address" class="form-label text-muted fw-bold small text-uppercase">Street Address</label>
+                            <input type="text" name="address" id="address" value="{{ donor.address|default:'' }}" class="form-control border-0 bg-light shadow-sm py-2" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="city" class="form-label text-muted fw-bold small text-uppercase">City</label>
+                            <input type="text" name="city" id="city" value="{{ donor.city|default:'' }}" class="form-control border-0 bg-light shadow-sm py-2" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="pincode" class="form-label text-muted fw-bold small text-uppercase">Pincode</label>
+                            <input type="text" name="pincode" id="pincode" value="{{ donor.pincode|default:'' }}" class="form-control border-0 bg-light shadow-sm py-2" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="state" class="form-label text-muted fw-bold small text-uppercase">State</label>
+                            <input type="text" name="state" id="state" value="{{ donor.state|default:'' }}" class="form-control border-0 bg-light shadow-sm py-2" required>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="d-grid pt-3">
+                        <button type="submit" class="btn btn-primary-custom btn-lg shadow-sm">
+                            <i class="bi bi-save me-2"></i> Update Profile
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

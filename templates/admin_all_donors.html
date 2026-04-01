@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% block title %}All Donors | Blood Bank Management{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 mt-3">
+    <h2 class="fw-bold mb-0" style="color: var(--secondary); font-size: 2.2rem;">
+        <i class="bi bi-people-fill me-2" style="color: var(--primary);"></i>Registered Donors
+    </h2>
+    <div class="d-flex gap-3">
+        <form method="GET" action="" class="d-flex">
+            <div class="input-group shadow-sm" style="border-radius: 8px; overflow: hidden; width: 300px;">
+                <input type="text" name="q" value="{{ query }}" class="form-control border-0 bg-white ps-3" placeholder="Search name, blood, phone...">
+                <button type="submit" class="btn btn-primary-custom border-0" style="padding-left: 15px; padding-right: 15px;"><i class="bi bi-search"></i></button>
+            </div>
+            {% if query %}
+            <a href="{% url 'admin_all_donors' %}" class="btn btn-outline-danger shadow-sm ms-2 bg-white" style="border-radius: 8px;"><i class="bi bi-x-lg"></i></a>
+            {% endif %}
+        </form>
+
+        <a href="{% url 'export_donors_csv' %}" class="btn btn-outline-success shadow-sm rounded-pill px-4 me-1">
+            <i class="bi bi-file-earmark-excel me-1"></i> Export Donors
+        </a>
+        <a href="{% url 'dashboard' %}" class="btn btn-secondary-custom shadow-sm d-flex align-items-center">
+            <i class="bi bi-arrow-left me-1"></i> Dashboard
+        </a>
+    </div>
+</div>
+
+<div class="premium-card mb-5 border-0">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-premium table-borderless align-middle text-center mb-0">
+                <thead>
+                    <tr>
+                        <th>Donor Name</th>
+                        <th>Contact</th>
+                        <th>Blood Group</th>
+                        <th>Age / Weight</th>
+                        <th>Health Details</th>
+                        <th>Eligibility</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+                    {% for donor in donors %}
+                    <tr>
+                        <td class="fw-semibold" style="color: var(--secondary);">
+                            <div class="d-flex align-items-center justify-content-center">
+                                <i class="bi bi-person-badge fs-5 me-2" style="color: var(--primary-light);"></i> 
+                                {{ donor.user.get_full_name|default:donor.user.username }}
+                            </div>
+                        </td>
+                        <td>
+                            <span class="text-muted small fw-semibold"><i class="bi bi-telephone-fill me-1"></i> {{ donor.phone }}</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-light border fs-6 px-3 py-2 rounded-pill shadow-sm" style="color: var(--primary);">
+                                {{ donor.blood_group.blood_group }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="fw-bold fs-6 text-dark">{{ donor.age }} yrs / {{ donor.weight }} kg</span> 
+                        </td>
+                        <td>
+                            {% if donor.health_issue %}
+                                <div class="text-muted small text-start p-2 border rounded bg-light" style="max-width: 250px; max-height: 80px; overflow-y: auto;">
+                                    {{ donor.health_issue_description|default:"No description provided." }}
+                                </div>
+                            {% else %}
+                                <span class="badge bg-light text-secondary border px-3 py-1 rounded-pill"><i class="bi bi-check-circle-fill me-1 text-success"></i> Healthy</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if donor.eligibility_status == "ELIGIBLE" %}
+                                <span class="badge bg-success px-3 py-2 rounded-pill shadow-sm">
+                                    <i class="bi bi-check-circle-fill me-1"></i> Eligible
+                                </span>
+                            {% elif donor.eligibility_status == "PENDING" %}
+                                <span class="badge bg-warning text-dark px-3 py-2 rounded-pill shadow-sm">
+                                    <i class="bi bi-hourglass-split me-1"></i> Pending
+                                </span>
+                            {% elif donor.eligibility_status == "REJECTED" %}
+                                <span class="badge bg-danger px-3 py-2 rounded-pill shadow-sm">
+                                    <i class="bi bi-x-circle-fill me-1"></i> Rejected
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary px-3 py-2 rounded-pill shadow-sm">
+                                    Unknown
+                                </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-5">
+                            <i class="bi bi-people fs-1 d-block mb-3" style="color: var(--primary-glare);"></i>
+                            {% if query %}
+                            <h5 class="fw-bold mb-1">No donors found.</h5>
+                            <p class="mb-0 small">Try completely different keywords to find who you're looking for.</p>
+                            {% else %}
+                            <h5 class="fw-bold mb-1">No donors registered yet.</h5>
+                            <p class="mb-0 small">As new users join and register, they will appear in this database automatically.</p>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

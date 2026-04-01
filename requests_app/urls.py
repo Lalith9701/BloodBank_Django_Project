@@ -9,4 +9,5 @@ urlpatterns = [
 
     # ✅ THIS IS MISSING IN YOUR PROJECT RIGHT NOW
     path('admin-requests/', views.admin_requests, name='admin_requests'),
+    path('export-requests/', views.export_requests_csv, name='export_requests_csv'),
 ]

@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block title %}Security Question | Blood Bank{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center py-5">
+  <div class="col-12 col-sm-9 col-md-7 col-lg-5">
+    <div class="premium-card">
+
+      <div class="premium-card-header flex-column text-center pb-3 border-0" style="background:transparent;">
+        <div style="width:72px;height:72px;border-radius:50%;background:var(--primary-light);
+                    color:var(--primary);display:flex;align-items:center;justify-content:center;
+                    font-size:2rem;margin:0 auto 16px;">
+          <i class="bi bi-patch-question-fill"></i>
+        </div>
+        <h3 class="fw-bold mb-1" style="color:var(--secondary);">Security Question</h3>
+        <p class="text-muted small mb-0">Answer your security question to verify your identity.</p>
+      </div>
+
+      <div class="card-body p-4 p-sm-5 pt-3">
+
+        {% if error %}
+          <div class="alert alert-danger border-0 shadow-sm d-flex align-items-center mb-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2 flex-shrink-0"></i>
+            <span>{{ error }}</span>
+          </div>
+        {% endif %}
+
+        <!-- Question display -->
+        <div class="mb-4 p-3 rounded-3 border shadow-sm" style="background:var(--primary-light);">
+          <p class="mb-0 fw-semibold" style="color:var(--primary);">
+            <i class="bi bi-question-circle-fill me-2"></i>{{ question }}
+          </p>
+        </div>
+
+        <form method="POST" novalidate>
+          {% csrf_token %}
+          <div class="mb-5">
+            <label for="answer" class="form-label text-muted fw-bold small text-uppercase">Your Answer</label>
+            <div class="input-group shadow-sm" style="border-radius:8px;overflow:hidden;">
+              <span class="input-group-text border-0 bg-light">
+                <i class="bi bi-chat-square-text-fill text-muted"></i>
+              </span>
+              <input type="text" name="answer" id="answer"
+                     class="form-control border-0 bg-light py-2"
+                     placeholder="Type your answer here"
+                     autocomplete="off" required autofocus>
+            </div>
+            <div class="form-text small mt-1">Answer is not case-sensitive.</div>
+          </div>
+
+          <div class="d-grid mb-3">
+            <button type="submit" class="btn btn-primary-custom btn-lg fw-bold shadow-hover">
+              <i class="bi bi-shield-check me-2"></i> Verify Answer
+            </button>
+          </div>
+          <div class="text-center">
+            <a href="{% url 'sq_lookup' %}" class="text-muted small text-decoration-none">
+              <i class="bi bi-arrow-left me-1"></i> Use a different account
+            </a>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

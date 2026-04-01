@@ -1,130 +1,101 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Blood Requests | Blood Bank</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
-    <style>
-        body {
-            background-color: #f8f9fa; 
-        }
-        .navbar-brand {
-            font-weight: bold;
-            letter-spacing: 1px;
-        }
-        .card {
-            border: none;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
-        }
-        /* Custom Table Styling */
-        .table-hover tbody tr:hover {
-            background-color: #fff5f6; /* Very light red tint on hover */
-        }
-        .empty-state {
-            padding: 60px 20px;
-            text-align: center;
-        }
-        .empty-state-icon {
-            font-size: 4rem;
-            color: #dee2e6;
-            margin-bottom: 15px;
-        }
-    </style>
-</head>
-<body>
+{% extends 'base.html' %}
+{% block title %}My Blood Requests | Blood Bank{% endblock %}
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-danger shadow-sm">
-        <div class="container">
-            <a class="navbar-brand" href="#">
-                <i class="bi bi-droplet-fill me-2"></i>Blood Bank Management
-            </a>
-            <div class="ms-auto">
-                <a href="{% url 'logout' %}" class="btn btn-sm btn-light text-danger fw-bold">
-                    <i class="bi bi-box-arrow-right me-1"></i> Logout
-                </a>
-            </div>
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3 mt-3">
+    <h2 class="fw-bold mb-0" style="color: var(--secondary); font-size: 2.2rem;">
+        <i class="bi bi-file-earmark-medical me-2" style="color: var(--primary);"></i>My Blood Requests
+    </h2>
+    <a href="{% url 'dashboard' %}" class="btn btn-secondary-custom shadow-sm">
+        <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
+    </a>
+</div>
+
+{% if requests %}
+<div class="premium-card mb-5 border-0">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-premium table-borderless align-middle text-center mb-0">
+                <thead>
+                    <tr>
+                        <th>Blood Group</th>
+                        <th>Units Required</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for req in requests %}
+                    <tr>
+                        <td class="fw-semibold text-secondary">
+                            <span class="badge bg-light border fs-6 px-3 py-2 rounded-pill shadow-sm text-primary">
+                                {{ req.blood_group }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="fw-bold fs-5 text-dark">{{ req.units_required }}</span> 
+                        </td>
+                        <td>
+                            {% if req.urgency == "EMERGENCY" %}
+                                <span class="badge bg-danger text-white px-2 py-1 rounded-pill small shadow-sm animate-pulse">EMERGENCY</span>
+                            {% elif req.urgency == "URGENT" %}
+                                <span class="badge bg-warning text-dark px-2 py-1 rounded-pill small shadow-sm">URGENT</span>
+                            {% else %}
+                                <span class="badge bg-info text-white px-2 py-1 rounded-pill small shadow-sm">NORMAL</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if req.status == "PENDING" %}
+                                <span class="badge bg-warning text-dark px-3 py-2 rounded-pill shadow-sm">
+                                    <i class="bi bi-hourglass-split me-1"></i> Pending
+                                </span>
+                            {% elif req.status == "APPROVED" %}
+                                <span class="badge bg-success text-white px-3 py-2 rounded-pill shadow-sm">
+                                    <i class="bi bi-check-circle-fill me-1"></i> Approved
+                                </span>
+                            {% else %}
+                                <div class="d-flex flex-column align-items-center">
+                                    <span class="badge bg-dark text-white px-3 py-2 rounded-pill shadow-sm">
+                                        <i class="bi bi-x-circle-fill me-1"></i> Rejected
+                                    </span>
+                                    {% if req.rejection_reason %}
+                                        <small class="text-danger fw-bold mt-1" title="{{ req.rejection_reason }}">Reason: {{ req.rejection_reason|truncatechars:20 }}</small>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if req.status == "APPROVED" %}
+                                {% if req.rating %}
+                                    <span class="badge bg-light text-warning border px-3 py-2 rounded-pill fw-bold">
+                                        <i class="bi bi-star-fill me-1"></i> Rated
+                                    </span>
+                                {% else %}
+                                    <a href="{% url 'rate_blood_request' req.id %}" class="btn btn-sm btn-primary-custom shadow-sm rounded-pill px-3 fw-bold">
+                                        <i class="bi bi-star-fill me-1"></i> Rate Service
+                                    </a>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-muted small italic">N/A</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
-    </nav>
-
-    <div class="container mt-5">
-        
-        <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
-            <h2 class="text-danger fw-bold mb-0">
-                <i class="bi bi-file-earmark-medical me-2"></i>My Blood Requests
-            </h2>
-            <a href="/dashboard/" class="btn btn-outline-secondary fw-bold shadow-sm">
-                <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
-            </a>
-        </div>
-
-        {% if requests %}
-            <div class="card mb-5">
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover table-borderless align-middle text-center mb-0">
-                            <thead class="table-danger text-danger">
-                                <tr>
-                                    <th class="py-3">Blood Group</th>
-                                    <th class="py-3">Units Required</th>
-                                    <th class="py-3">Status</th>
-                                    <th class="py-3">Request Date</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for req in requests %}
-                                <tr class="border-bottom">
-                                    <td class="py-3">
-                                        <span class="badge bg-danger fs-6 px-3 py-2 rounded-pill shadow-sm">
-                                            {{ req.blood_group }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span class="fw-bold fs-5 text-dark">{{ req.units_required }}</span> 
-                                        <span class="text-muted small ms-1">units</span>
-                                    </td>
-                                    <td>
-                                        {% if req.status == "PENDING" %}
-                                            <span class="badge bg-warning text-dark px-3 py-2 rounded-pill shadow-sm">
-                                                <i class="bi bi-hourglass-split me-1"></i> Pending
-                                            </span>
-                                        {% elif req.status == "APPROVED" %}
-                                            <span class="badge bg-success px-3 py-2 rounded-pill shadow-sm">
-                                                <i class="bi bi-check-circle-fill me-1"></i> Approved
-                                            </span>
-                                        {% else %}
-                                            <span class="badge bg-dark px-3 py-2 rounded-pill shadow-sm">
-                                                <i class="bi bi-x-circle-fill me-1"></i> Rejected
-                                            </span>
-                                        {% endif %}
-                                    </td>
-                                    <td class="text-secondary fw-semibold">
-                                        <i class="bi bi-calendar-date me-1"></i> {{ req.request_date }}
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-            {% else %}
-            <div class="card mb-5">
-                <div class="card-body empty-state">
-                    <i class="bi bi-folder2-open empty-state-icon"></i>
-                    <h4 class="text-muted fw-bold">No Blood Requests</h4>
-                    <p class="text-secondary mb-4">You have not submitted any blood requests yet.</p>
-                    <a href="/requests/request/" class="btn btn-danger btn-lg fw-bold px-4 rounded-pill shadow-sm">
-                        <i class="bi bi-hospital me-1"></i> Request Blood Now
-                    </a>
-                </div>
-            </div>
-        {% endif %}
-
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+</div>
+{% else %}
+<div class="premium-card mb-5 border-0 bg-transparent shadow-none border">
+    <div class="card-body text-center" style="padding: 80px 20px;">
+        <i class="bi bi-folder2-open d-block mb-3" style="font-size: 5rem; color: var(--primary-glare);"></i>
+        <h3 class="text-secondary fw-bold mb-2">No Blood Requests</h3>
+        <p class="text-muted mb-4 fs-5">You have not submitted any blood requests yet.</p>
+        <a href="{% url 'request_blood' %}" class="btn btn-primary-custom btn-lg shadow-hover px-5 rounded-pill">
+            <i class="bi bi-hospital me-2"></i> Request Blood Now
+        </a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

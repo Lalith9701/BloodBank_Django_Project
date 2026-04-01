@@ -1,0 +1,169 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Blood Bank Management System{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    
+    <!-- Custom Premium CSS -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+    <!-- Unified Navbar -->
+    <nav class="navbar navbar-expand-lg sticky-top shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="bi bi-droplet-fill text-danger"></i> BloodBank
+            </a>
+            
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <i class="bi bi-list fs-2"></i>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link fw-semibold" href="{% url 'blood_availability' %}">Availability</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link fw-semibold" href="{% url 'donor_search' %}">Donors</a>
+                    </li>
+                </ul>
+
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <!-- Dark Mode Toggle -->
+                    <li class="nav-item me-3">
+                        <button class="btn btn-link nav-link px-0 text-secondary" id="themeToggle" title="Toggle Dark/Light Mode">
+                            <i class="bi bi-moon-stars-fill fs-5" id="themeIcon"></i>
+                        </button>
+                    </li>
+
+                    {% if request.user.is_authenticated %}
+                        <!-- Notification Bell -->
+                        <li class="nav-item me-3 position-relative">
+                            <a href="{% url 'notifications_view' %}" class="nav-link px-0 text-secondary" title="Notifications">
+                                <i class="bi bi-bell-fill fs-5"></i>
+                                {% if unread_notif_count > 0 %}
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger shadow-sm" style="font-size: 0.6rem; padding: 0.35em 0.65em;">
+                                        {{ unread_notif_count }}
+                                    </span>
+                                {% endif %}
+                            </a>
+                        </li>
+
+                        <!-- User Profile Dropdown -->
+                        <li class="nav-item dropdown me-2">
+                            <a class="nav-link dropdown-toggle d-flex align-items-center gap-2 py-1 px-3 bg-light border rounded-pill shadow-sm text-dark" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-person-circle fs-5 text-danger"></i>
+                                <span class="fw-bold small">{{ request.user.get_full_name|default:request.user.username }}</span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3 mt-2" aria-labelledby="userDropdown">
+                                <li><a class="dropdown-item py-2" href="{% url 'dashboard' %}"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a></li>
+                                <li><a class="dropdown-item py-2" href="{% url 'profile' %}"><i class="bi bi-person-gear me-2"></i> My Profile</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form method="POST" action="{% url 'logout' %}" class="m-0 p-0">
+                                        {% csrf_token %}
+                                        <button type="submit" class="dropdown-item py-2 text-danger border-0 bg-transparent w-100 text-start">
+                                            <i class="bi bi-box-arrow-right me-2"></i> Logout
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a href="{% url 'login' %}" class="nav-link fw-bold">Login</a>
+                        </li>
+                        <li class="nav-item ms-2">
+                            <a href="{% url 'register' %}" class="btn btn-primary-custom btn-sm px-4 rounded-pill shadow-sm">Register</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow-1 py-4">
+        <div class="container pt-3">
+            
+            <!-- Global Messages -->
+            {% if messages %}
+                <div class="row justify-content-center mb-4">
+                    <div class="col-md-8">
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show premium-card border-start border-4 shadow-sm" style="border-left-color: var(--primary) !important;" role="alert">
+                                <strong>Notice:</strong> {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Page Content -->
+            {% block content %}
+            {% endblock %}
+            
+        </div>
+    </main>
+
+    <!-- Unified Footer -->
+    <footer>
+        <div class="container">
+            <p class="mb-0 fw-medium">
+                &copy; {{ request.user.last_login|date:"Y"|default:"2026" }} Blood Bank Management System. All rights reserved.
+            </p>
+            <p class="small mt-1 mb-0" style="color: var(--text-muted); opacity: 0.8;">Designed with modern aesthetics for a premium experience.</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Theme Toggle Script -->
+    <script>
+        const themeToggle = document.getElementById('themeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+        const htmlElement = document.documentElement;
+
+        // Check for saved theme
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        htmlElement.setAttribute('data-theme', savedTheme);
+        updateIcon(savedTheme);
+
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = htmlElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            
+            htmlElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateIcon(newTheme);
+        });
+
+        function updateIcon(theme) {
+            if (theme === 'dark') {
+                themeIcon.classList.replace('bi-moon-stars-fill', 'bi-sun-fill');
+            } else {
+                themeIcon.classList.replace('bi-sun-fill', 'bi-moon-stars-fill');
+            }
+        }
+    </script>
+    {% block extra_js %}{% endblock %}
+    
+    <!-- Floating Emergency Request Button -->
+    <a href="{% url 'request_blood' %}" class="floating-emergency-btn shadow-hover" title="Emergency Blood Request">
+        <i class="bi bi-heart-pulse-fill"></i>
+    </a>
+</body>
+</html>
