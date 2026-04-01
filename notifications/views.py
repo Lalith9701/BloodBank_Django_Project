@@ -5,8 +5,6 @@ from .models import Notification
 @login_required
 def notifications_view(request):
     notifications = request.user.notifications.all()
-    # Mark as read when visited? Or maybe just have a separate mark-as-read action.
-    # Let's just list them.
     return render(request, 'notifications.html', {
         'notifications': notifications
     })

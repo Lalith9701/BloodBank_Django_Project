@@ -4,32 +4,29 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.contrib import messages
-from django.core.mail import send_mail
-from django.conf import settings
 from django.http import HttpResponse
 from django.db.models import Q
 from django.utils import timezone
-import csv, logging
+import csv
+import logging
+import re
 
 from inventory.models import BloodGroup
 from donors.models import Donor
 from notifications.models import Notification
 from .models import SecurityProfile, SECURITY_QUESTIONS
 
-import re
-
 User = get_user_model()
 logger = logging.getLogger('accounts')
 
 # Brute-force lockout: 3 wrong answers → 15-minute lockout
-SQ_MAX_ATTEMPTS  = 3
-SQ_LOCKOUT_MINS  = 15
+SQ_MAX_ATTEMPTS = 3
+SQ_LOCKOUT_MINS = 15
 
 
 def validate_strong_password(password: str) -> list[str]:
     """
-    Returns a list of error strings.
-    Empty list means the password is valid.
+    Returns a list of error strings. Empty list = valid.
     Only used during registration — does NOT affect login or reset flows.
     """
     errors = []
@@ -91,7 +88,6 @@ def register(request):
     blood_groups = BloodGroup.objects.all()
 
     if request.method == 'POST':
-        # ── Collect & normalise inputs ───────────────────────
         full_name         = request.POST.get('full_name', '').strip()
         name_parts        = full_name.split(' ', 1)
         first_name        = name_parts[0].strip()
@@ -114,10 +110,8 @@ def register(request):
         question_key      = request.POST.get('security_question')
         sq_answer         = request.POST.get('security_answer', '').strip()
 
-        # ── Field-level error dict ───────────────────────────
         field_errors = {}
 
-        # 1. Duplicate phone (username)
         if not phone:
             field_errors['phone'] = 'Mobile number is required.'
         elif not phone.isdigit() or len(phone) < 10:
@@ -125,29 +119,24 @@ def register(request):
         elif User.objects.filter(username=phone).exists():
             field_errors['phone'] = 'This mobile number is already registered.'
 
-        # 2. Duplicate email (case-insensitive)
         if not email:
             field_errors['email'] = 'Email address is required.'
         elif User.objects.filter(email__iexact=email).exists():
             field_errors['email'] = 'This email is already registered.'
 
-        # 3. Duplicate full name (case-insensitive, trimmed)
         if first_name and User.objects.filter(
             first_name__iexact=first_name,
             last_name__iexact=last_name
         ).exists():
             field_errors['full_name'] = 'A user with this full name already exists.'
 
-        # 4. Password strength
         pw_errors = validate_strong_password(password)
         if pw_errors:
-            field_errors['password'] = pw_errors  # list
+            field_errors['password'] = pw_errors
 
-        # 5. Confirm password
         if password and confirm_password and password != confirm_password:
             field_errors['confirm_password'] = 'Passwords do not match.'
 
-        # 6. Security question
         if not question_key or question_key not in dict(SECURITY_QUESTIONS):
             field_errors['security_question'] = 'Please select a valid security question.'
         if not sq_answer:
@@ -158,11 +147,9 @@ def register(request):
                 'blood_groups': blood_groups,
                 'security_questions': SECURITY_QUESTIONS,
                 'field_errors': field_errors,
-                # Preserve submitted values so user doesn't retype everything
                 'form_data': request.POST,
             })
 
-        # ── All valid — save ─────────────────────────────────
         has_health_issue = (health_issue == "True")
         eligibility      = 'PENDING' if has_health_issue else 'ELIGIBLE'
 
@@ -223,14 +210,12 @@ def logout_view(request):
 
 
 # ============================================================
-# FORGOT PASSWORD — Step 1: Enter phone / username
+# FORGOT PASSWORD — Step 1: Enter phone / email
 # ============================================================
 def sq_lookup(request):
-    """User enters their phone number (username) to look up their security question."""
     if request.method == 'POST':
         identifier = request.POST.get('identifier', '').strip()
 
-        # Try phone (username) first, then email
         user = (User.objects.filter(username=identifier).first() or
                 User.objects.filter(email__iexact=identifier).first())
 
@@ -247,14 +232,12 @@ def sq_lookup(request):
                 'error': 'This account has no security question set. Please contact support.'
             })
 
-        # Check lockout
         if sp.locked_until and timezone.now() < sp.locked_until:
             remaining = int((sp.locked_until - timezone.now()).total_seconds() // 60) + 1
             return render(request, 'sq_lookup.html', {
                 'error': f'Account temporarily locked. Try again in {remaining} minute(s).'
             })
 
-        # Store username in session and move to answer step
         request.session['sq_username'] = user.username
         logger.info(f"Security question lookup for: {user.username}")
         return redirect('sq_answer')
@@ -266,7 +249,6 @@ def sq_lookup(request):
 # FORGOT PASSWORD — Step 2: Answer the security question
 # ============================================================
 def sq_answer(request):
-    """Display the security question and validate the answer."""
     username = request.session.get('sq_username')
     if not username:
         return redirect('sq_lookup')
@@ -277,7 +259,6 @@ def sq_answer(request):
     except (User.DoesNotExist, SecurityProfile.DoesNotExist):
         return redirect('sq_lookup')
 
-    # Re-check lockout on every POST
     if sp.locked_until and timezone.now() < sp.locked_until:
         remaining = int((sp.locked_until - timezone.now()).total_seconds() // 60) + 1
         del request.session['sq_username']
@@ -289,7 +270,6 @@ def sq_answer(request):
         answer = request.POST.get('answer', '').strip()
 
         if sp.check_answer(answer):
-            # ✅ Correct — reset attempts, allow password reset
             sp.reset_attempts = 0
             sp.locked_until   = None
             sp.save()
@@ -324,7 +304,6 @@ def sq_answer(request):
 # FORGOT PASSWORD — Step 3: Set new password
 # ============================================================
 def sq_reset_password(request):
-    """Allow password reset after security question is verified."""
     username = request.session.get('sq_verified')
     if not username:
         return redirect('sq_lookup')
@@ -378,15 +357,6 @@ def admin_health_approvals(request):
                     message='Your health eligibility has been approved. You can now donate blood.',
                     notif_type='success'
                 )
-                if donor.user.email:
-                    try:
-                        send_mail(
-                            'Blood Bank - Health Status Approved',
-                            f'Hello {donor.user.first_name},\n\nYour health eligibility has been approved.',
-                            settings.DEFAULT_FROM_EMAIL, [donor.user.email]
-                        )
-                    except Exception: pass
-
             elif action == 'reject':
                 donor.eligibility_status = 'REJECTED'
                 donor.save()
@@ -395,14 +365,6 @@ def admin_health_approvals(request):
                     message='Your health eligibility has been rejected by the admin.',
                     notif_type='danger'
                 )
-                if donor.user.email:
-                    try:
-                        send_mail(
-                            'Blood Bank - Health Status Rejected',
-                            f'Hello {donor.user.first_name},\n\nYour health eligibility has been rejected.',
-                            settings.DEFAULT_FROM_EMAIL, [donor.user.email]
-                        )
-                    except Exception: pass
         except Donor.DoesNotExist:
             pass
         return redirect('admin_health_approvals')

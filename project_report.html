@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blood Bank Management System — Project Report</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ── Reset & Base ─────────────────────────────────────── */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --red:    #dc2626;
+  --red-dk: #b91c1c;
+  --red-lt: #fee2e2;
+  --navy:   #1e293b;
+  --slate:  #334155;
+  --muted:  #64748b;
+  --light:  #f8fafc;
+  --border: #e2e8f0;
+  --blue-lt:#dbeafe;
+  --blue:   #1d4ed8;
+  --grn-lt: #dcfce7;
+  --grn:    #16a34a;
+}
+body {
+  font-family: 'Inter', sans-serif;
+  font-size: 13.5px;
+  line-height: 1.75;
+  color: var(--navy);
+  background: #fff;
+}
+@media print {
+  .no-print { display: none !important; }
+  body { font-size: 12px; }
+  .pb { page-break-before: always; }
+  section { page-break-inside: avoid; }
+  h2 { page-break-after: avoid; }
+}
+
+/* ── Layout ───────────────────────────────────────────── */
+.page { max-width: 960px; margin: 0 auto; padding: 40px 52px; }
+
+/* ── Print Button ─────────────────────────────────────── */
+.print-btn {
+  position: fixed; top: 20px; right: 20px; z-index: 999;
+  background: var(--red); color: #fff; border: none;
+  padding: 10px 22px; border-radius: 8px; cursor: pointer;
+  font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600;
+  box-shadow: 0 4px 14px rgba(220,38,38,.35);
+  transition: background .2s;
+}
+.print-btn:hover { background: var(--red-dk); }
+
+/* ── Cover Page ───────────────────────────────────────── */
+.cover {
+  text-align: center;
+  padding: 64px 24px 48px;
+  border-bottom: 3px solid var(--red);
+  margin-bottom: 48px;
+}
+.cover-tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--red-lt); color: var(--red);
+  padding: 5px 16px; border-radius: 20px;
+  font-size: 11px; font-weight: 700; letter-spacing: 1px;
+  text-transform: uppercase; margin-bottom: 24px;
+}
+.cover h1 {
+  font-size: 36px; font-weight: 800; color: var(--red);
+  line-height: 1.15; margin-bottom: 10px;
+}
+.cover .subtitle {
+  font-size: 16px; font-weight: 400; color: var(--muted);
+  margin-bottom: 40px;
+}
+.meta-grid {
+  display: flex; justify-content: center;
+  flex-wrap: wrap; gap: 0;
+  border: 1px solid var(--border); border-radius: 10px;
+  overflow: hidden; max-width: 680px; margin: 0 auto;
+}
+.meta-item {
+  flex: 1; min-width: 110px;
+  padding: 16px 20px; text-align: center;
+  border-right: 1px solid var(--border);
+}
+.meta-item:last-child { border-right: none; }
+.meta-label {
+  font-size: 9.5px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1px; color: var(--muted); margin-bottom: 5px;
+}
+.meta-value { font-size: 13px; font-weight: 700; color: var(--slate); }
+
+/* ── Table of Contents ────────────────────────────────── */
+.toc {
+  background: var(--light); border: 1px solid var(--border);
+  border-radius: 10px; padding: 28px 36px; margin-bottom: 48px;
+}
+.toc-title {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1.2px; color: var(--red); margin-bottom: 18px;
+}
+.toc-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 6px 40px;
+  list-style: none;
+}
+.toc-grid li {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 13px; color: var(--slate); padding: 4px 0;
+  border-bottom: 1px dashed var(--border);
+}
+.toc-num {
+  background: var(--red); color: #fff;
+  width: 22px; height: 22px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; flex-shrink: 0;
+}
+
+/* ── Section Headings ─────────────────────────────────── */
+section { margin-bottom: 52px; }
+.section-header {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 24px; padding-bottom: 12px;
+  border-bottom: 2px solid var(--red);
+}
+.section-num {
+  background: var(--red); color: #fff;
+  width: 32px; height: 32px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 800; flex-shrink: 0;
+}
+.section-title {
+  font-size: 18px; font-weight: 800; color: var(--navy);
+  text-transform: uppercase; letter-spacing: .5px;
+}
+.sub-heading {
+  font-size: 13.5px; font-weight: 700; color: var(--slate);
+  margin: 24px 0 12px;
+  padding-left: 12px;
+  border-left: 3px solid var(--red);
+}
+p { color: var(--muted); margin-bottom: 12px; }
+p strong { color: var(--slate); }
+
+/* ── Tables ───────────────────────────────────────────── */
+.tbl-wrap { overflow-x: auto; margin-bottom: 20px; border-radius: 8px; border: 1px solid var(--border); }
+table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+thead tr { background: var(--navy); }
+thead th {
+  padding: 11px 14px; text-align: left;
+  color: #fff; font-weight: 600;
+  font-size: 11px; text-transform: uppercase; letter-spacing: .6px;
+}
+tbody td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  color: var(--slate); vertical-align: top;
+}
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:nth-child(even) td { background: var(--light); }
+tbody tr:hover td { background: #f1f5f9; }
+
+/* ── Badges ───────────────────────────────────────────── */
+.badge {
+  display: inline-block; padding: 3px 10px; border-radius: 12px;
+  font-size: 11px; font-weight: 700;
+}
+.badge-red   { background: var(--red-lt); color: var(--red); }
+.badge-blue  { background: var(--blue-lt); color: var(--blue); }
+.badge-green { background: var(--grn-lt); color: var(--grn); }
+.badge-gray  { background: var(--light); color: var(--muted); border: 1px solid var(--border); }
+
+/* ── Stat Cards ───────────────────────────────────────── */
+.stat-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 14px; margin-bottom: 28px;
+}
+.stat-card {
+  background: var(--light); border: 1px solid var(--border);
+  border-radius: 10px; padding: 18px 20px;
+  border-top: 3px solid var(--red);
+}
+.stat-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin-bottom: 6px; }
+.stat-value { font-size: 28px; font-weight: 800; color: var(--red); line-height: 1; }
+.stat-desc { font-size: 11px; color: var(--muted); margin-top: 5px; }
+
+/* ── Feature List ─────────────────────────────────────── */
+.feat-list { list-style: none; padding: 0; margin-bottom: 8px; }
+.feat-list li {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 6px 0; border-bottom: 1px solid var(--border);
+  color: var(--slate); font-size: 13px;
+}
+.feat-list li:last-child { border-bottom: none; }
+.feat-list li::before {
+  content: '✓'; color: var(--red); font-weight: 800;
+  font-size: 12px; margin-top: 2px; flex-shrink: 0;
+}
+
+/* ── Flow Diagram ─────────────────────────────────────── */
+.flow {
+  display: flex; align-items: center; flex-wrap: wrap;
+  gap: 6px; margin: 14px 0;
+}
+.flow-step {
+  background: #fff; border: 1.5px solid var(--border);
+  border-radius: 6px; padding: 7px 14px;
+  font-size: 12px; font-weight: 600; color: var(--slate);
+  box-shadow: 0 1px 3px rgba(0,0,0,.05);
+}
+.flow-arrow { color: var(--red); font-weight: 800; font-size: 16px; }
+
+/* ── Code ─────────────────────────────────────────────── */
+code {
+  background: var(--light); border: 1px solid var(--border);
+  border-radius: 4px; padding: 1px 6px;
+  font-family: 'Courier New', monospace;
+  font-size: 11.5px; color: var(--red);
+}
+
+/* ── Info Box ─────────────────────────────────────────── */
+.info-box {
+  background: var(--light); border: 1px solid var(--border);
+  border-left: 4px solid var(--red); border-radius: 0 8px 8px 0;
+  padding: 14px 18px; margin: 14px 0; font-size: 13px; color: var(--slate);
+}
+
+/* ── Footer ───────────────────────────────────────────── */
+.footer {
+  border-top: 2px solid var(--red); margin-top: 48px;
+  padding-top: 20px; text-align: center;
+}
+.footer p { font-size: 11.5px; color: var(--muted); margin-bottom: 4px; }
+.footer strong { color: var(--red); }
+</style>
+</head>
+<body>
+
+<button class="print-btn no-print" onclick="window.print()">🖨 Save as PDF</button>
+
+<div class="page">
+
+<!-- ═══════════════════════════════════════════════════════
+     COVER
+════════════════════════════════════════════════════════ -->
+<div class="cover">
+  <div class="cover-tag">🩸 College Project Report</div>
+  <h1>Blood Bank Management System</h1>
+  <p class="subtitle">A Full-Stack Web Application built with Django &amp; Python</p>
+  <div class="meta-grid">
+    <div class="meta-item">
+      <div class="meta-label">Framework</div>
+      <div class="meta-value">Django 6.0</div>
+    </div>
+    <div class="meta-item">
+      <div class="meta-label">Language</div>
+      <div class="meta-value">Python 3.13</div>
+    </div>
+    <div class="meta-item">
+      <div class="meta-label">Database</div>
+      <div class="meta-value">SQLite 3</div>
+    </div>
+    <div class="meta-item">
+      <div class="meta-label">Frontend</div>
+      <div class="meta-value">Bootstrap 5.3</div>
+    </div>
+    <div class="meta-item">
+      <div class="meta-label">Architecture</div>
+      <div class="meta-value">MVT Pattern</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     TABLE OF CONTENTS
+════════════════════════════════════════════════════════ -->
+<div class="toc">
+  <div class="toc-title">Table of Contents</div>
+  <ol class="toc-grid">
+    <li><span class="toc-num">1</span> Project Overview &amp; Objectives</li>
+    <li><span class="toc-num">2</span> Technology Stack</li>
+    <li><span class="toc-num">3</span> System Architecture</li>
+    <li><span class="toc-num">4</span> Database Design &amp; Models</li>
+    <li><span class="toc-num">5</span> Application Modules &amp; Features</li>
+    <li><span class="toc-num">6</span> URL Routing &amp; Endpoints</li>
+    <li><span class="toc-num">7</span> Security Features</li>
+    <li><span class="toc-num">8</span> External APIs &amp; Services</li>
+    <li><span class="toc-num">9</span> Frontend &amp; UI Design</li>
+    <li><span class="toc-num">10</span> Configuration &amp; Bugs Fixed</li>
+  </ol>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SECTION 1 — OVERVIEW
+════════════════════════════════════════════════════════ -->
+<section id="s1">
+  <div class="section-header">
+    <div class="section-num">1</div>
+    <div class="section-title">Project Overview &amp; Objectives</div>
+  </div>
+
+  <p>
+    The <strong>Blood Bank Management System</strong> is a full-stack web application that digitises
+    and streamlines blood bank operations. It brings together three types of users —
+    <strong>Admins</strong>, <strong>Donors</strong>, and <strong>Requesters</strong> — on a single
+    platform, enabling real-time blood inventory management, donation tracking, blood request
+    processing, and public donor search.
+  </p>
+  <p>
+    This project was built as a college project to demonstrate practical knowledge of web development,
+    database design, user authentication, and secure coding practices using the Django framework.
+  </p>
+
+  <h3 class="sub-heading">What the System Does</h3>
+  <ul class="feat-list">
+    <li>Provides a centralised platform for managing blood donations and requests</li>
+    <li>Tracks blood stock in real-time — automatically updates when donations are made or requests are approved</li>
+    <li>Allows patients to submit blood requests with urgency levels: Normal, Urgent, or Emergency</li>
+    <li>Lets admins approve or reject requests and manage donor health eligibility</li>
+    <li>Offers a public donor search — filter by blood group, city, or pincode</li>
+    <li>Sends in-app notifications for all key events (approvals, rejections, donations)</li>
+    <li>Exports donor and request data to CSV for reporting</li>
+    <li>Provides a secure, question-based password reset — no email or SMS required</li>
+  </ul>
+
+  <h3 class="sub-heading">User Roles</h3>
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr><th>Role</th><th>What They Can Do</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="badge badge-red">ADMIN</span></td>
+          <td>Manage blood stock, approve/reject blood requests, review donor health eligibility, view all donors, export CSV reports, access Django admin panel</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-blue">DONOR</span></td>
+          <td>Register with health details, log blood donations, view donation history, submit blood requests, track request status, rate service, manage profile</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-green">REQUESTER</span></td>
+          <td>Submit blood requests with urgency level, track request status, rate approved requests</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════
+     SECTION 2 — TECHNOLOGY STACK
+════════════════════════════════════════════════════════ -->
+<section id="s2" class="pb">
+  <div class="section-header">
+    <div class="section-num">2</div>
+    <div class="section-title">Technology Stack</div>
+  </div>
+
+  <h3 class="sub-heading">Backend Technologies</h3>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Technology</th><th>Version</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Python</strong></td><td>3.13</td><td>Core programming language</td></tr>
+        <tr><td><strong>Django</strong></td><td>6.0</td><td>Web framework — MVT architecture, ORM, authentication, admin panel</td></tr>
+        <tr><td><strong>SQLite 3</strong></td><td>Built-in</td><td>Relational database — file-based, zero configuration needed</td></tr>
+        <tr><td><strong>Django ORM</strong></td><td>Built-in</td><td>Database abstraction layer — all queries use ORM, no raw SQL</td></tr>
+        <tr><td><strong>django.contrib.auth</strong></td><td>Built-in</td><td>Authentication system, PBKDF2-SHA256 password hashing, sessions</td></tr>
+        <tr><td><strong>django.contrib.auth.hashers</strong></td><td>Built-in</td><td>PBKDF2 hashing for security question answers</td></tr>
+        <tr><td><strong>Python csv</strong></td><td>Built-in</td><td>CSV export for donors and blood requests</td></tr>
+        <tr><td><strong>Python logging</strong></td><td>Built-in</td><td>Application-level logging to console and log file</td></tr>
+        <tr><td><strong>Python re (regex)</strong></td><td>Built-in</td><td>Password strength validation rules</td></tr>
+        <tr><td><strong>Python os / pathlib</strong></td><td>Built-in</td><td>Loading environment variables from .env file</td></tr>
+        <tr><td><strong>WSGI</strong></td><td>Built-in</td><td>Web Server Gateway Interface for deployment</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 class="sub-heading">Frontend Technologies</h3>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Technology</th><th>Version</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td><strong>HTML5</strong></td><td>—</td><td>Page structure and semantic markup</td></tr>
+        <tr><td><strong>CSS3</strong></td><td>—</td><td>Custom styling, CSS variables, dark mode, animations</td></tr>
+        <tr><td><strong>JavaScript (Vanilla)</strong></td><td>ES2022</td><td>Live password validation, pincode auto-fill, dark mode toggle, password strength indicator</td></tr>
+        <tr><td><strong>Bootstrap</strong></td><td>5.3.0 (CDN)</td><td>Responsive grid, UI components, utility classes</td></tr>
+        <tr><td><strong>Bootstrap Icons</strong></td><td>1.10.5 (CDN)</td><td>Icon library used throughout the interface</td></tr>
+        <tr><td><strong>Django Template Language</strong></td><td>Built-in</td><td>Server-side HTML rendering with template tags, filters, and context variables</td></tr>
+        <tr><td><strong>Google Fonts — Inter</strong></td><td>CDN</td><td>Primary UI typeface for clean, modern readability</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="info-box">
+    <strong>No npm, no build tools, no package.json.</strong> All frontend dependencies are loaded
+    directly from CDN in <code>base.html</code>. The only Python package required is Django.
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════
+     SECTION 3 — ARCHITECTURE
+════════════════════════════════════════════════════════ -->
+<section id="s3">
+  <div class="section-header">
+    <div class="section-num">3</div>
+    <div class="section-title">System Architecture</div>
+  </div>
+
+  <p>
+    The project follows Django's <strong>MVT (Model-View-Template)</strong> pattern. The codebase is
+    split into <strong>6 Django apps</strong>, each responsible for a specific domain. All views are
+    function-based (FBVs) for simplicity and clarity.
+  </p>
+
+  <h3 class="sub-heading">How a Request Flows Through the System</h3>
+  <div class="flow">
+    <div class="flow-step">🌐 Browser</div><div class="flow-arrow">→</div>
+    <div class="flow-step">URL Router</div><div class="flow-arrow">→</div>
+    <div class="flow-step">View Function</div><div class="flow-arrow">→</div>
+    <div class="flow-step">ORM / Model</div><div class="flow-arrow">→</div>
+    <div class="flow-step">SQLite DB</div><div class="flow-arrow">→</div>
+    <div class="flow-step">Template</div><div class="flow-arrow">→</div>
+    <div class="flow-step">HTML Response</div>
+  </div>
+
+  <h3 class="sub-heading">Project Folder Structure</h3>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Folder / File</th><th>What It Contains</th></tr></thead>
+      <tbody>
+        <tr><td><code>bloodbank/</code></td><td>Main project config — settings.py, root urls.py, wsgi.py</td></tr>
+        <tr><td><code>accounts/</code></td><td>User model, SecurityProfile, login, register, logout, profile, password reset, admin donor views</td></tr>
+        <tr><td><code>donors/</code></td><td>Donor model and public donor search view</td></tr>
+        <tr><td><code>inventory/</code></td><td>BloodGroup and BloodStock models, stock management views</td></tr>
+        <tr><td><code>requests_app/</code></td><td>BloodRequest and Donation models, request/donation views, admin approval, CSV export</td></tr>
+        <tr><td><code>notifications/</code></td><td>Notification model, views, context processor for unread count badge</td></tr>
+        <tr><td><code>ratings/</code></td><td>Rating model and rate-a-request view</td></tr>
+        <tr><td><code>templates/</code></td><td>24 HTML templates covering all user flows</td></tr>
+        <tr><td><code>static/css/style.css</code></td><td>Custom CSS — variables, dark mode overrides, component styles</td></tr>
+        <tr><td><code>.env</code></td><td>Optional environment variable overrides (not committed to Git)</td></tr>
+        <tr><td><code>db.sqlite3</code></td><td>SQLite database file</td></tr>
+        <tr><td><code>bloodbank.log</code></td><td>Application log file — auth events, password reset attempts</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 class="sub-heading">Middleware Stack</h3>
+  <p>Django processes every request through these middleware layers in order:</p>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>#</th><th>Middleware</th><th>What It Does</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td><code>SecurityMiddleware</code></td><td>Adds security headers (HSTS, XSS protection)</td></tr>
+        <tr><td>2</td><td><code>SessionMiddleware</code></td><td>Manages user sessions across requests</td></tr>
+        <tr><td>3</td><td><code>CommonMiddleware</code></td><td>URL normalisation and content-type handling</td></tr>
+        <tr><td>4</td><td><code>CsrfViewMiddleware</code></td><td>Validates CSRF tokens on all POST requests</td></tr>
+        <tr><td>5</td><td><code>AuthenticationMiddleware</code></td><td>Attaches the authenticated user to every request</td></tr>
+        <tr><td>6</td><td><code>MessageMiddleware</code></td><td>Enables flash messages (success, error, info)</td></tr>
+        <tr><td>7</td><td><code>XFrameOptionsMiddleware</code></td><td>Prevents clickjacking via X-Frame-Options: DENY</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════
+     SECTION 4 — DATABASE
+════════════════════════════════════════════════════════ -->
+<section id="s4" class="pb">
+  <div class="section-header">
+    <div class="section-num">4</div>
+    <div class="section-title">Database Design &amp; Models</div>
+  </div>
+
+  <p>
+    The system uses <strong>SQLite 3</strong> with <strong>Django ORM</strong> for all database
+    operations. There are <strong>9 models</strong> across 6 apps. No raw SQL is written anywhere
+    in the project.
+  </p>
+
+  <h3 class="sub-heading">All 9 Models at a Glance</h3>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Model</th><th>App</th><th>Key Fields</th><th>Relationships</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>User</strong></td><td>accounts</td>
+          <td>username (phone), email (unique), first_name, last_name, role, password</td>
+          <td>Base for all users → OneToOne with Donor and SecurityProfile</td>
+        </tr>
+        <tr>
+          <td><strong>SecurityProfile</strong></td><td>accounts</td>
+          <td>question_key, answer_hash, reset_attempts, locked_until</td>
+          <td>OneToOne → User</td>
+        </tr>
+        <tr>
+          <td><strong>Donor</strong></td><td>donors</td>
+          <td>phone, age, gender, weight, health_issue, eligibility_status, availability, address, city, state, pincode, nation</td>
+          <td>OneToOne → User; FK → BloodGroup</td>
+        </tr>
+        <tr>
+          <td><strong>BloodGroup</strong></td><td>inventory</td>
+          <td>blood_group (unique, e.g. A+, O-)</td>
+          <td>Referenced by Donor, BloodStock, BloodRequest, Donation</td>
+        </tr>
+        <tr>
+          <td><strong>BloodStock</strong></td><td>inventory</td>
+          <td>units_available</td>
+          <td>OneToOne → BloodGroup; auto-updated on donation and approval</td>
+        </tr>
+        <tr>
+          <td><strong>BloodRequest</strong></td><td>requests_app</td>
+          <td>units_required, urgency, status, rejection_reason, request_date</td>
+          <td>FK → User, BloodGroup, Donor (optional)</td>
+        </tr>
+        <tr>
+          <td><strong>Donation</strong></td><td>requests_app</td>
+          <td>units, donation_date</td>
+          <td>FK → Donor, BloodGroup; auto-increments BloodStock on save</td>
+        </tr>
+        <tr>
+          <td><strong>Notification</strong></td><td>notifications</td>
+          <td>title, message, notif_type, is_read, created_at</td>
+          <td>FK → User</td>
+        </tr>
+        <tr>
+          <td><strong>Rating</strong></td><td>ratings</td>
+          <td>donor_rating (1–5), service_rating (1–5), feedback, created_at</td>
+          <td>OneToOne → BloodRequest; FK → User (rater)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 class="sub-heading">Smart Stock Management (Automatic)</h3>
+  <p>Two models have custom <code>save()</code> overrides that keep blood stock accurate automatically:</p>
+  <ul class="feat-list">
+    <li><strong>Donation.save()</strong> — when a donation is recorded, the matching BloodStock units are automatically increased</li>
+    <li><strong>BloodRequest.save()</strong> — when a request is approved, stock is checked. If enough units exist, stock is reduced. If not, the request is automatically rejected</li>
+  </ul>
+
+  <h3 class="sub-heading">Donor Eligibility Flow</h3>
+  <div class="flow">
+    <div class="flow-step">Register with health issue</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Status: PENDING</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Admin Reviews</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">ELIGIBLE or REJECTED</div>
+  </div>
+  <div class="flow" style="margin-top:8px">
+    <div class="flow-step">Register without health issue</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step">Status: ELIGIBLE immediately</div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════
+     SECTION 5 — MODULES & FEATURES
+════════════════════════════════════════════════════════ -->
+<section id="s5" class="pb">
+  <div class="section-header">
+    <div class="section-num">5</div>
+    <div class="section-title">Application Modules &amp; Features</div>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-label">Django Apps</div>
+      <div class="stat-value">6</div>
+      <div class="stat-desc">accounts, donors, inventory, requests_app, notifications, ratings</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Database Models</div>
+      <div class="stat-value">9</div>
+      <div class="stat-desc">User, SecurityProfile, Donor, BloodGroup, BloodStock, BloodRequest, Donation, Notification, Rating</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">HTML Templates</div>
+      <div class="stat-value">24</div>
+      <div class="stat-desc">All user flows covered with base.html as master layout</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">URL Endpoints</div>
+      <div class="stat-value">22</div>
+      <div class="stat-desc">Across all 6 apps plus Django admin panel</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">User Roles</div>
+      <div class="stat-value">3</div>
+      <div class="stat-desc">Admin, Donor, Requester — each with a dedicated dashboard</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Security Layers</div>
+      <div class="stat-value">8+</div>
+      <div class="stat-desc">CSRF, hashing, brute-force protection, unique constraints, role checks, session-gating</div>
+    </div>
+  </div>
+
+  <h3 class="sub-heading">Module 1 — User Authentication &amp; Registration</h3>
+  <ul class="feat-list">
+    <li>Custom User model extending Django's AbstractUser with a <code>role</code> field and unique <code>email</code></li>
+    <li>Login accepts phone number (username) OR full name — case-insensitive with whitespace normalisation</li>
+    <li>Registration collects full profile: name, email, phone, blood group, age, gender, weight, health details, and location</li>
+    <li>Duplicate prevention: unique email at DB level, unique phone, case-insensitive full name check</li>
+    <li>Strong password rules at registration only: min 8 chars, uppercase, lowercase, digit, special character</li>
+    <li>Live password strength indicator (5 levels: Very Weak → Strong) with real-time checklist</li>
+    <li>Confirm password field with live match indicator</li>
+    <li>Role-based dashboard routing after login</li>
+    <li>Secure logout via POST form — prevents CSRF-based forced logout</li>
+    <li>Editable user profile page for name, email, and location</li>
+  </ul>
+
+  <h3 class="sub-heading">Module 2 — Security Question Password Reset</h3>
+  <ul class="feat-list">
+    <li>3-step flow: Enter phone/email → Answer security question → Set new password</li>
+    <li>8 predefined security questions — user picks one at registration</li>
+    <li>Answers stored as PBKDF2 hashes — never stored in plain text</li>
+    <li>Answers are case-insensitive (normalised to lowercase before hashing)</li>
+    <li>Brute-force protection: 3 wrong answers triggers a 15-minute account lockout</li>
+    <li>All reset attempts are logged to <code>bloodbank.log</code></li>
+    <li>New password validated against Django's full password validators before saving</li>
+    <li>Session-gated: users cannot skip steps or jump directly to the reset page</li>
+  </ul>
+
+  <h3 class="sub-heading">Module 3 — Blood Inventory Management</h3>
+  <ul class="feat-list">
+    <li>Admin adds blood groups (A+, A-, B+, B-, O+, O-, AB+, AB-) and stock units</li>
+    <li>Stock automatically increases when a donation is recorded</li>
+    <li>Stock automatically decreases when a blood request is approved</li>
+    <li>If stock is insufficient at approval time, the request is automatically rejected</li>
+    <li>Public blood availability page — no login required to view</li>
+  </ul>
+
+  <h3 class="sub-heading">Module 4 — Blood Donations</h3>
+  <ul class="feat-list">
+    <li>Donors log their blood donations with units donated</li>
+    <li>90-day cooldown enforced — system shows exact days remaining before next donation</li>
+    <li>Eligibility check before donation — PENDING and REJECTED donors cannot donate</li>
+    <li>Donor availability is set to Offline after donation for the recovery period</li>
+    <li>In-app notification created automatically after each donation</li>
+    <li>Full donation history page showing date and units for each donation</li>
+  </ul>
+
+  <h3 class="sub-heading">Module 5 — Blood Requests</h3>
+  <ul class="feat-list">
+    <li>Any authenticated user can submit a blood request</li>
+    <li>Three urgency levels: Normal, Urgent, Emergency (colour-coded in admin view)</li>
+    <li>Admin approves or rejects with an optional rejection reason</li>
+    <li>Approval auto-deducts stock; auto-rejects if stock is insufficient</li>
+    <li>Requester receives an in-app notification on every status change</li>
+    <li>My Requests page shows status, urgency level, and rejection reason</li>
+    <li>CSV export of all requests available to admin</li>
+  </ul>
+
+  <h3 class="sub-heading">Module 6 — Public Donor Search</h3>
+  <ul class="feat-list">
+    <li>Publicly accessible — no login required to search for donors</li>
+    <li>Filter by blood group, city, and pincode</li>
+    <li>Only shows donors who are available and eligible</li>
+    <li>Phone number is hidden from unauthenticated visitors</li>
+  </ul>
+
+  <h3 class="sub-heading">Module 7 — In-App Notifications</h3>
+  <ul class="feat-list">
+    <li>4 notification types: info, success, warning, danger</li>
+    <li>Unread count shown as a badge on the navbar bell icon (via context processor)</li>
+    <li>Mark individual notifications as read, or mark all as read at once</li>
+    <li>Notifications auto-created for: donation recorded, request approved/rejected, health status approved/rejected</li>
+  </ul>
+
+  <h3 class="sub-heading">Module 8 — Service Ratings</h3>
+  <ul class="feat-list">
+    <li>Requesters can rate an approved blood request after it is fulfilled</li>
+    <li>Two separate ratings: Donor Experience (1–5 stars) and Service Rating (1–5 stars)</li>
+    <li>Optional text feedback field</li>
+    <li>One rating per request — prevents duplicate ratings</li>
+    <li>Rating status shown in the My Requests page</li>
+  </ul>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════
+     SECTION 6 — URL ROUTING
+════════════════════════════════════════════════════════ -->
+<section id="s6" class="pb">
+  <div class="section-header">
+    <div class="section-num">6</div>
+    <div class="section-title">URL Routing &amp; Endpoints</div>
+  </div>
+
+  <h3 class="sub-heading">Accounts App — base URL: <code>/</code></h3>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>URL</th><th>View Function</th><th>Access Level</th></tr></thead>
+      <tbody>
+        <tr><td><code>/</code></td><td>login_view</td><td><span class="badge badge-gray">Public</span></td></tr>
+        <tr><td><code>/register/</code></td><td>register</td><td><span class="badge badge-gray">Public</span></td></tr>
+        <tr><td><code>/dashboard/</code></td><td>dashboard</td><td><span class="badge badge-blue">Login Required</span></td></tr>
+        <tr><td><code>/logout/</code></td><td>logout_view</td><td><span class="badge badge-blue">POST only</span></td></tr>
+        <tr><td><code>/profile/</code></td><td>profile</td><td><span class="badge badge-blue">Login Required</span></td></tr>
+        <tr><td><code>/forgot-password/</code></td><td>sq_lookup</td><td><span class="badge badge-gray">Public</span></td></tr>
+        <tr><td><code>/forgot-password/question/</code></td><td>sq_answer</td><td><span class="badge badge-blue">Session-gated</span></td></tr>
+        <tr><td><code>/forgot-password/reset/</code></td><td>sq_reset_password</td><td><span class="badge badge-blue">Session-gated</span></td></tr>
+        <tr><td><code>/admin-health-approvals/</code></td><td>admin_health_approvals</td><td><span class="badge badge-red">Staff Only</span></td></tr>
+        <tr><td><code>/admin-all-donors/</code></td><td>admin_all_donors</td><td><span class="badge badge-red">Staff Only</span></td></tr>
+        <tr><td><code>/export-donors/</code></td><td>export_donors_csv</td><td><span class="badge badge-red">Staff Only</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 class="sub-heading">Inventory App — base URL: <code>/inventory/</code></h3>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>URL</th><th>Purpose</th><th>Access Level</th></tr></thead>
+      <tbody>
+        <tr><td><code>/inventory/blood-stock/</code></td><td>View blood inventory</td><td><span class="badge badge-blue">Login Required</span></td></tr>
+        <tr><td><code>/inventory/add-blood-group/</code></td><td>Add a new blood group</td><td><span class="badge badge-blue">Login Required</span></td></tr>
+        <tr><td><code>/inventory/add-blood-stock/</code></td><td>Add units to a blood group</td><td><span class="badge badge-blue">Login Required</span></td></tr>
+        <tr><td><code>/inventory/availability/</code></td><td>Public blood availability page</td><td><span class="badge badge-gray">Public</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 class="sub-heading">Requests App — base URL: <code>/requests/</code></h3>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>URL</th><th>Purpose</th><th>Access Level</th></tr></thead>
+      <tbody>
+        <tr><td><code>/requests/add-donation/</code></td><td>Log a blood donation</td><td><span class="badge badge-blue">Donor Only</span></td></tr>
+        <tr><td><code>/requests/my-donations/</code></td><td>View donation history</td><td><span class="badge badge-blue">Donor Only</span></td></tr>
+        <tr><td><code>/requests/request-blood/</code></td><td>Submit a blood request</td><td><span class="badge badge-blue">Login Required</span></td></tr>
+        <tr><td><code>/requests/my-requests/</code></td><td>View my blood requests</td><td><span class="badge badge-blue">Login Required</span></td></tr>
+        <tr><td><code>/requests/admin-requests/</code></td><td>Approve or reject requests</td><td><span class="badge badge-red">Staff Only</span></td></tr>
+        <tr><td><code>/requests/export-requests/</code></td><td>Export requests to CSV</td><td><span class="badge badge-red">Staff Only</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 class="sub-heading">Other Apps</h3>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>URL</th><th>App</th><th>Purpose</th><th>Access</th></tr></thead>
+      <tbody>
+        <tr><td><code>/donors/search/</code></td><td>donors</td><td>Search for available donors</td><td><span class="badge badge-gray">Public</span></td></tr>
+        <tr><td><code>/notifications/</code></td><td>notifications</td><td>View all notifications</td><td><span class="badge badge-blue">Login Required</span></td></tr>
+        <tr><td><code>/notifications/mark-read/&lt;id&gt;/</code></td><td>notifications</td><td>Mark one notification as read</td><td><span class="badge badge-blue">Login Required</span></td></tr>
+        <tr><td><code>/notifications/mark-all-read/</code></td><td>notifications</td><td>Mark all notifications as read</td><td><span class="badge badge-blue">Login Required</span></td></tr>
+        <tr><td><code>/ratings/rate/&lt;id&gt;/</code></td><td>ratings</td><td>Rate a fulfilled blood request</td><td><span class="badge badge-blue">Login Required</span></td></tr>
+        <tr><td><code>/admin/</code></td><td>Django built-in</td><td>Django admin panel</td><td><span class="badge badge-red">Superuser Only</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════
+     SECTION 7 — SECURITY
+════════════════════════════════════════════════════════ -->
+<section id="s7">
+  <div class="section-header">
+    <div class="section-num">7</div>
+    <div class="section-title">Security Features</div>
+  </div>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Security Feature</th><th>How It Works</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>CSRF Protection</strong></td>
+          <td>Every POST form includes a CSRF token. Logout uses a POST form to prevent forced-logout attacks via malicious links.</td>
+        </tr>
+        <tr>
+          <td><strong>Password Hashing</strong></td>
+          <td>Django's PBKDF2-SHA256 algorithm via <code>create_user()</code> and <code>set_password()</code>. Passwords are never stored in plain text.</td>
+        </tr>
+        <tr>
+          <td><strong>Strong Password Rules</strong></td>
+          <td>Applied at registration only: minimum 8 characters, must include uppercase, lowercase, digit, and special character. Does not affect login or password reset.</td>
+        </tr>
+        <tr>
+          <td><strong>Security Answer Hashing</strong></td>
+          <td>Security question answers are hashed with PBKDF2 via Django's <code>make_password()</code>. Answers are normalised to lowercase before hashing for case-insensitive comparison.</td>
+        </tr>
+        <tr>
+          <td><strong>Brute-Force Protection</strong></td>
+          <td>3 wrong security question answers triggers a 15-minute account lockout. The lockout timestamp is stored in <code>SecurityProfile.locked_until</code>.</td>
+        </tr>
+        <tr>
+          <td><strong>Unique Data Constraints</strong></td>
+          <td>Email is unique at the database level (<code>unique=True</code>) and checked in the view. Phone number (username) is unique. Full name is checked case-insensitively before saving.</td>
+        </tr>
+        <tr>
+          <td><strong>Role-Based Access Control</strong></td>
+          <td>Views check <code>request.user.role</code> and <code>request.user.is_staff</code>. Non-donors are redirected away from donation views. Non-staff are redirected away from admin views.</td>
+        </tr>
+        <tr>
+          <td><strong>Session-Gated Password Reset</strong></td>
+          <td>The 3-step reset flow uses Django session keys. Users cannot skip steps or access the reset page directly without completing the prior steps.</td>
+        </tr>
+        <tr>
+          <td><strong>Login Required Decorator</strong></td>
+          <td>All authenticated views use <code>@login_required</code>. Unauthenticated users are redirected to the login page automatically.</td>
+        </tr>
+        <tr>
+          <td><strong>Clickjacking Protection</strong></td>
+          <td><code>XFrameOptionsMiddleware</code> adds the <code>X-Frame-Options: DENY</code> header to all responses.</td>
+        </tr>
+        <tr>
+          <td><strong>Application Logging</strong></td>
+          <td>Auth events, password reset attempts, and wrong answer attempts are logged to both the console and <code>bloodbank.log</code>.</td>
+        </tr>
+        <tr>
+          <td><strong>Input Normalisation</strong></td>
+          <td>Email is lowercased before saving. Phone numbers are stripped of whitespace. Full names are trimmed. Security answers are lowercased before hashing.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════
+     SECTION 8 — EXTERNAL APIS
+════════════════════════════════════════════════════════ -->
+<section id="s8" class="pb">
+  <div class="section-header">
+    <div class="section-num">8</div>
+    <div class="section-title">External APIs &amp; Third-Party Services</div>
+  </div>
+
+  <h3 class="sub-heading">Pincode Auto-Fill (Registration Page)</h3>
+  <p>
+    When a user types their 6-digit pincode during registration, the system automatically fetches
+    and fills in the city, state, and country. This is done entirely client-side using JavaScript
+    <code>fetch()</code> with a 400ms debounce to avoid excessive API calls.
+  </p>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>API</th><th>Endpoint</th><th>Role</th><th>Cost</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>PostalPincode.in</strong></td>
+          <td><code>api.postalpincode.in/pincode/{pin}</code></td>
+          <td>Primary source — fetches city, state, country from Indian pincode</td>
+          <td>Free, no API key needed</td>
+        </tr>
+        <tr>
+          <td><strong>Nominatim (OpenStreetMap)</strong></td>
+          <td><code>nominatim.openstreetmap.org/search</code></td>
+          <td>Fallback — used if the primary API fails or returns no data</td>
+          <td>Free, no API key needed</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="info-box">
+    If both APIs fail, the city, state, and nation fields automatically unlock so the user can
+    type their location manually. The form never gets stuck.
+  </div>
+
+  <h3 class="sub-heading">CDN Libraries (No Installation Required)</h3>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Library</th><th>Version</th><th>Loaded From</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>Bootstrap CSS + JS</strong></td><td>5.3.0</td>
+          <td>cdn.jsdelivr.net</td>
+          <td>Responsive grid, UI components, utility classes</td>
+        </tr>
+        <tr>
+          <td><strong>Bootstrap Icons</strong></td><td>1.10.5</td>
+          <td>cdn.jsdelivr.net</td>
+          <td>Icon set used throughout the interface</td>
+        </tr>
+        <tr>
+          <td><strong>Google Fonts — Inter</strong></td><td>—</td>
+          <td>fonts.googleapis.com</td>
+          <td>Primary typeface for clean, modern readability</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════
+     SECTION 9 — FRONTEND & UI
+════════════════════════════════════════════════════════ -->
+<section id="s9">
+  <div class="section-header">
+    <div class="section-num">9</div>
+    <div class="section-title">Frontend &amp; UI Design</div>
+  </div>
+
+  <h3 class="sub-heading">Design System</h3>
+  <p>
+    The UI is built on Bootstrap 5 with a custom design system using CSS custom properties (variables).
+    The primary colour is <strong>Blood Red (#dc2626)</strong>, chosen to reflect the domain.
+    All colours, backgrounds, and borders switch automatically between light and dark mode.
+  </p>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>CSS Variable</th><th>Light Mode</th><th>Dark Mode</th><th>Used For</th></tr></thead>
+      <tbody>
+        <tr><td><code>--bg-color</code></td><td>#f8fafc</td><td>#0f172a</td><td>Page background</td></tr>
+        <tr><td><code>--card-bg</code></td><td>#ffffff</td><td>#1e293b</td><td>Cards and panels</td></tr>
+        <tr><td><code>--text-main</code></td><td>#0f172a</td><td>#f1f5f9</td><td>Primary text</td></tr>
+        <tr><td><code>--primary</code></td><td>#dc2626</td><td>#dc2626</td><td>Brand colour (same in both modes)</td></tr>
+        <tr><td><code>--secondary</code></td><td>#334155</td><td>#cbd5e1</td><td>Headings and labels</td></tr>
+        <tr><td><code>--nav-bg</code></td><td>#ffffff</td><td>#1e293b</td><td>Navbar background</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 class="sub-heading">Dark Mode</h3>
+  <p>
+    Full dark mode is implemented by toggling <code>data-theme="dark"</code> on the HTML element.
+    The user's preference is saved to <code>localStorage</code> and restored on every page load.
+    Comprehensive CSS overrides ensure Bootstrap utility classes like <code>bg-light</code> and
+    <code>text-dark</code> also respect the theme.
+  </p>
+
+  <h3 class="sub-heading">Key UI Components</h3>
+  <ul class="feat-list">
+    <li><strong>Sticky Navbar</strong> — notification bell with unread badge, user dropdown, dark mode toggle, responsive hamburger menu</li>
+    <li><strong>Dashboard Cards</strong> — clickable navigation cards with icon wrappers and hover lift animation</li>
+    <li><strong>Premium Cards</strong> — consistent card style with border, shadow, and hover effects across all pages</li>
+    <li><strong>Floating Emergency Button</strong> — fixed bottom-right button for quick blood request access on every page</li>
+    <li><strong>Password Strength Bar</strong> — 5-level colour-coded bar (Very Weak → Strong) with live checklist</li>
+    <li><strong>Pincode Auto-fill</strong> — live fetch with spinner, success/error states, and manual fallback</li>
+    <li><strong>Star Rating UI</strong> — CSS-only interactive stars using radio inputs and reverse flexbox</li>
+    <li><strong>Data Tables</strong> — styled tables with alternating rows, badge status indicators, and action buttons</li>
+  </ul>
+
+  <h3 class="sub-heading">All 24 Templates</h3>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Template File</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td><code>base.html</code></td><td>Master layout — navbar, footer, flash messages, dark mode script, CDN links</td></tr>
+        <tr><td><code>login.html</code></td><td>Login form — accepts phone number or full name</td></tr>
+        <tr><td><code>register.html</code></td><td>Full donor registration with strength indicator, pincode auto-fill, security question</td></tr>
+        <tr><td><code>admin_dashboard.html</code></td><td>Admin quick-action navigation cards</td></tr>
+        <tr><td><code>donor_dashboard.html</code></td><td>Donor quick-action cards with eligibility status badge</td></tr>
+        <tr><td><code>requester_dashboard.html</code></td><td>Requester quick-action cards</td></tr>
+        <tr><td><code>profile.html</code></td><td>Editable user profile page</td></tr>
+        <tr><td><code>blood_stock.html</code></td><td>Blood inventory table with add buttons</td></tr>
+        <tr><td><code>blood_availability.html</code></td><td>Public blood availability page</td></tr>
+        <tr><td><code>add_blood_group.html</code></td><td>Form to add a new blood group</td></tr>
+        <tr><td><code>add_blood_stock.html</code></td><td>Form to add stock units</td></tr>
+        <tr><td><code>add_donation.html</code></td><td>Form to log a blood donation</td></tr>
+        <tr><td><code>my_donations.html</code></td><td>Donor's donation history table</td></tr>
+        <tr><td><code>request_blood.html</code></td><td>Form to submit a blood request</td></tr>
+        <tr><td><code>my_requests.html</code></td><td>User's request history with status and rate button</td></tr>
+        <tr><td><code>admin_requests.html</code></td><td>Admin approve/reject requests table</td></tr>
+        <tr><td><code>admin_all_donors.html</code></td><td>Admin searchable donor database with CSV export</td></tr>
+        <tr><td><code>admin_health_approvals.html</code></td><td>Admin health eligibility review table</td></tr>
+        <tr><td><code>donor_search.html</code></td><td>Public donor search with filters</td></tr>
+        <tr><td><code>notifications.html</code></td><td>Notification inbox with mark-read actions</td></tr>
+        <tr><td><code>rate_blood_request.html</code></td><td>Star rating form for approved requests</td></tr>
+        <tr><td><code>sq_lookup.html</code></td><td>Forgot password — enter phone or email</td></tr>
+        <tr><td><code>sq_answer.html</code></td><td>Forgot password — answer security question</td></tr>
+        <tr><td><code>sq_reset_password.html</code></td><td>Forgot password — set new password</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════
+     SECTION 10 — CONFIGURATION & BUGS FIXED
+════════════════════════════════════════════════════════ -->
+<section id="s10" class="pb">
+  <div class="section-header">
+    <div class="section-num">10</div>
+    <div class="section-title">Configuration &amp; Bugs Fixed</div>
+  </div>
+
+  <h3 class="sub-heading">Environment Variables (.env)</h3>
+  <p>
+    Sensitive configuration is stored in a <code>.env</code> file at the project root.
+    The file is loaded manually using Python's built-in <code>os</code> and <code>pathlib</code>
+    — no third-party packages like <code>python-dotenv</code> are needed.
+  </p>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Variable</th><th>Purpose</th><th>Default</th></tr></thead>
+      <tbody>
+        <tr><td><code>SECRET_KEY</code></td><td>Django secret key for cryptographic signing</td><td>Insecure default — change in production</td></tr>
+        <tr><td><code>DEBUG</code></td><td>Enable/disable debug mode</td><td>True</td></tr>
+        <tr><td><code>ALLOWED_HOSTS</code></td><td>Comma-separated list of allowed hostnames</td><td>localhost,127.0.0.1</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 class="sub-heading">How to Run the Project Locally</h3>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Step</th><th>Command</th></tr></thead>
+      <tbody>
+        <tr><td>1. Install Django</td><td><code>pip install django</code></td></tr>
+        <tr><td>2. Apply database migrations</td><td><code>python manage.py migrate</code></td></tr>
+        <tr><td>3. Create an admin superuser</td><td><code>python manage.py createsuperuser</code></td></tr>
+        <tr><td>4. Start the development server</td><td><code>python manage.py runserver</code></td></tr>
+        <tr><td>5. Open in browser</td><td><code>http://127.0.0.1:8000</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 class="sub-heading">Bugs Fixed During Development</h3>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>#</th><th>Bug Description</th><th>Fix Applied</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td><code>make_list</code> template filter used in rate_blood_request.html — this filter does not exist in Django</td><td>Replaced with hardcoded radio inputs for each star value</td></tr>
+        <tr><td>2</td><td>Logout link was a GET <code>&lt;a&gt;</code> tag — caused HTTP 405 error in Django 4.1+ (logout requires POST)</td><td>Replaced with a POST form button in base.html</td></tr>
+        <tr><td>3</td><td>Hardcoded URLs in admin_dashboard.html (<code>/inventory/blood-stock/</code>, <code>/requests/admin-requests/</code>)</td><td>Replaced with <code>{% url %}</code> template tags</td></tr>
+        <tr><td>4</td><td><code>Donor.objects.get(user=request.user)</code> in add_donation/my_donations — crashed for non-donor users</td><td>Added role check and try/except DoesNotExist</td></tr>
+        <tr><td>5</td><td>Missing <code>related_name='donor'</code> on Donor.user — <code>request.user.donor</code> failed in templates</td><td>Added related_name and created a new migration</td></tr>
+        <tr><td>6</td><td><code>LOGIN_URL = 'login'</code> (URL name) caused PasswordResetConfirmView to redirect to <code>/password/login/</code> (404)</td><td>Changed to <code>LOGIN_URL = '/'</code> (actual path)</td></tr>
+        <tr><td>7</td><td>my_requests.html table had 4 header columns but 5 data columns</td><td>Added the missing Urgency header</td></tr>
+        <tr><td>8</td><td>admin_requests.html empty state colspan was 5 but the table has 6 columns</td><td>Fixed colspan to 6</td></tr>
+        <tr><td>9</td><td>Dark mode: Bootstrap utility classes (<code>bg-light</code>, <code>text-dark</code>) ignored CSS variables</td><td>Added comprehensive <code>[data-theme="dark"]</code> overrides in style.css</td></tr>
+        <tr><td>10</td><td>Duplicate email and phone allowed at registration — no uniqueness check</td><td>Added view-level checks and DB-level <code>unique=True</code> on email with a data migration</td></tr>
+        <tr><td>11</td><td><code>BloodGroup.objects.get(id=group_id)</code> in inventory/views.py — no error handling for invalid ID</td><td>Wrapped in try/except DoesNotExist</td></tr>
+        <tr><td>12</td><td>Google Fonts (Inter) referenced in CSS but the <code>&lt;link&gt;</code> tag was missing from base.html</td><td>Added the link tag to base.html and removed the duplicate @import from style.css</td></tr>
+        <tr><td>13</td><td>Dead dashboard.html template with broken hardcoded URLs — never actually used by any view</td><td>Deleted the file</td></tr>
+        <tr><td>14</td><td>Bare <code>except: pass</code> in requests_app/views.py silently swallowed all exceptions</td><td>Changed to <code>except Exception: pass</code></td></tr>
+        <tr><td>15</td><td><code>import re</code> placed after third-party imports in accounts/views.py</td><td>Moved to the stdlib imports section at the top</td></tr>
+        <tr><td>16</td><td>Stale development comment left in notifications/views.py</td><td>Removed the comment</td></tr>
+        <tr><td>17</td><td>Pincode auto-fill used a single unreliable API — failed silently with no fallback</td><td>Added Nominatim (OpenStreetMap) as fallback, 400ms debounce, and manual entry fallback</td></tr>
+        <tr><td>18</td><td>Gmail SMTP email feature added then removed — left dead imports, send_mail calls, and email config in settings</td><td>Removed all email code from both view files and settings.py</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════
+     FOOTER
+════════════════════════════════════════════════════════ -->
+<div class="footer">
+  <p><strong>Blood Bank Management System</strong> &nbsp;·&nbsp; Django 6.0 + Python 3.13 + Bootstrap 5.3</p>
+  <p>College Project &nbsp;·&nbsp; 10 Sections &nbsp;·&nbsp; 9 Models &nbsp;·&nbsp; 24 Templates &nbsp;·&nbsp; 18 Bugs Fixed</p>
+</div>
+
+</div><!-- /page -->
+</body>
+</html>

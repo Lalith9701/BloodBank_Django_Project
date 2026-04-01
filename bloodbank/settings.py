@@ -1,6 +1,5 @@
 from pathlib import Path
 import os
-import logging
 
 # ============================================================
 # Load .env file — no third-party packages needed
@@ -119,44 +118,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # ============================================================
 # AUTHENTICATION
 # ============================================================
-LOGIN_URL = '/'                  # path to login page (root)
+LOGIN_URL = '/'
 LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/'
 
-# Token expires after 1 day (in seconds: 60 * 60 * 24)
-PASSWORD_RESET_TIMEOUT = 86400
-
 # ============================================================
-# EMAIL — Gmail SMTP with App Password
-# ============================================================
-_email_user = os.environ.get('EMAIL_HOST_USER', '')
-_email_pass = os.environ.get('EMAIL_HOST_PASSWORD', '')
-
-# If credentials are missing/placeholder, fall back to console backend
-# so the app doesn't crash during development
-if _email_user and _email_user != 'your-gmail@gmail.com' and _email_pass and _email_pass != 'your-16-char-app-password':
-    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-    EMAIL_HOST = 'smtp.gmail.com'
-    EMAIL_PORT = 587
-    EMAIL_USE_TLS = True
-    EMAIL_HOST_USER = _email_user
-    EMAIL_HOST_PASSWORD = _email_pass
-    DEFAULT_FROM_EMAIL = f'Blood Bank Management <{_email_user}>'
-    SERVER_EMAIL = _email_user
-else:
-    # Prints email to console — useful during development
-    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-    EMAIL_HOST_USER = ''
-    DEFAULT_FROM_EMAIL = 'Blood Bank Management <noreply@bloodbank.local>'
-
-# ============================================================
-# SITE DOMAIN
-# ============================================================
-SITE_DOMAIN = os.environ.get('SITE_DOMAIN', 'localhost:8000')
-SITE_PROTOCOL = os.environ.get('SITE_PROTOCOL', 'http')
-
-# ============================================================
-# LOGGING — track email sending and errors
+# LOGGING
 # ============================================================
 LOGGING = {
     'version': 1,
@@ -182,11 +149,6 @@ LOGGING = {
         'django': {
             'handlers': ['console'],
             'level': 'WARNING',
-        },
-        'django.core.mail': {
-            'handlers': ['console', 'file'],
-            'level': 'DEBUG',
-            'propagate': False,
         },
         'accounts': {
             'handlers': ['console', 'file'],

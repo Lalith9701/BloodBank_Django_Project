@@ -25,14 +25,22 @@ def add_blood_stock(request):
         group_id = request.POST.get('blood_group')
         units = request.POST.get('units')
 
-        blood_group = BloodGroup.objects.get(id=group_id)
+        try:
+            blood_group = BloodGroup.objects.get(id=group_id)
+        except BloodGroup.DoesNotExist:
+            return redirect('blood_stock')
+
+        units = int(units) if units and str(units).isdigit() else 0
+        if units <= 0:
+            return redirect('blood_stock')
+
         stock, created = BloodStock.objects.get_or_create(
             blood_group=blood_group,
             defaults={'units_available': units}
         )
 
         if not created:
-            stock.units_available += int(units)
+            stock.units_available += units
             stock.save()
 
         return redirect('blood_stock')
