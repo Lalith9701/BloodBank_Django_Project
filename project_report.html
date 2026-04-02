@@ -283,7 +283,7 @@ code {
     <li><span class="toc-num">5</span> Application Modules &amp; Features</li>
     <li><span class="toc-num">6</span> URL Routing &amp; Endpoints</li>
     <li><span class="toc-num">7</span> Security Features</li>
-    <li><span class="toc-num">8</span> External APIs &amp; Services</li>
+    <li><span class="toc-num">8</span> Pincode Auto-Fill &amp; CDN Services</li>
     <li><span class="toc-num">9</span> Frontend &amp; UI Design</li>
     <li><span class="toc-num">10</span> Configuration &amp; Bugs Fixed</li>
   </ol>
@@ -320,6 +320,8 @@ code {
     <li>Sends in-app notifications for all key events (approvals, rejections, donations)</li>
     <li>Exports donor and request data to CSV for reporting</li>
     <li>Provides a secure, question-based password reset — no email or SMS required</li>
+    <li>Allows deactivated users to contact the administrator directly from the login page</li>
+    <li>Pincode auto-fill on registration — fetches city, state, and country automatically from a 6-digit Indian pincode</li>
   </ul>
 
   <h3 class="sub-heading">User Roles</h3>
@@ -331,11 +333,11 @@ code {
       <tbody>
         <tr>
           <td><span class="badge badge-red">ADMIN</span></td>
-          <td>Manage blood stock, approve/reject blood requests, review donor health eligibility, view all donors, export CSV reports, access Django admin panel</td>
+          <td>Manage blood stock, approve/reject blood requests, review donor health eligibility, view all donors, export CSV reports, access Django admin panel, read messages from deactivated users, view audit logs</td>
         </tr>
         <tr>
           <td><span class="badge badge-blue">DONOR</span></td>
-          <td>Register with health details, log blood donations, view donation history, submit blood requests, track request status, rate service, manage profile</td>
+          <td>Register with health details, log blood donations, view donation history, submit blood requests, track request status, rate service, manage profile, toggle availability</td>
         </tr>
         <tr>
           <td><span class="badge badge-green">REQUESTER</span></td>
@@ -371,6 +373,7 @@ code {
         <tr><td><strong>Python re (regex)</strong></td><td>Built-in</td><td>Password strength validation rules</td></tr>
         <tr><td><strong>Python os / pathlib</strong></td><td>Built-in</td><td>Loading environment variables from .env file</td></tr>
         <tr><td><strong>WSGI</strong></td><td>Built-in</td><td>Web Server Gateway Interface for deployment</td></tr>
+        <tr><td><strong>Django FileField / MEDIA</strong></td><td>Built-in</td><td>File upload handling — stores health documents in <code>media/health_documents/</code></td></tr>
       </tbody>
     </table>
   </div>
@@ -435,7 +438,7 @@ code {
         <tr><td><code>requests_app/</code></td><td>BloodRequest and Donation models, request/donation views, admin approval, CSV export</td></tr>
         <tr><td><code>notifications/</code></td><td>Notification model, views, context processor for unread count badge</td></tr>
         <tr><td><code>ratings/</code></td><td>Rating model and rate-a-request view</td></tr>
-        <tr><td><code>templates/</code></td><td>24 HTML templates covering all user flows</td></tr>
+        <tr><td><code>templates/</code></td><td>26 HTML templates covering all user flows</td></tr>
         <tr><td><code>static/css/style.css</code></td><td>Custom CSS — variables, dark mode overrides, component styles</td></tr>
         <tr><td><code>.env</code></td><td>Optional environment variable overrides (not committed to Git)</td></tr>
         <tr><td><code>db.sqlite3</code></td><td>SQLite database file</td></tr>
@@ -473,19 +476,24 @@ code {
 
   <p>
     The system uses <strong>SQLite 3</strong> with <strong>Django ORM</strong> for all database
-    operations. There are <strong>9 models</strong> across 6 apps. No raw SQL is written anywhere
+    operations. There are <strong>11 models</strong> across 6 apps. No raw SQL is written anywhere
     in the project.
   </p>
 
-  <h3 class="sub-heading">All 9 Models at a Glance</h3>
+  <h3 class="sub-heading">All 11 Models at a Glance</h3>
   <div class="tbl-wrap">
     <table>
       <thead><tr><th>Model</th><th>App</th><th>Key Fields</th><th>Relationships</th></tr></thead>
       <tbody>
         <tr>
           <td><strong>User</strong></td><td>accounts</td>
-          <td>username (phone), email (unique), first_name, last_name, role, password</td>
+          <td>username (phone), email (unique), first_name, last_name, role, is_active, password</td>
           <td>Base for all users → OneToOne with Donor and SecurityProfile</td>
+        </tr>
+        <tr>
+          <td><strong>AuditLog</strong></td><td>accounts</td>
+          <td>actor (FK), action, target, detail, timestamp</td>
+          <td>FK to User (actor); auto-created on every admin action</td>
         </tr>
         <tr>
           <td><strong>SecurityProfile</strong></td><td>accounts</td>
@@ -493,9 +501,14 @@ code {
           <td>OneToOne → User</td>
         </tr>
         <tr>
+          <td><strong>ContactAdminMessage</strong></td><td>accounts</td>
+          <td>name, phone, message, is_read, sent_at</td>
+          <td>Standalone — no FK; submitted by deactivated users from the login page</td>
+        </tr>
+        <tr>
           <td><strong>Donor</strong></td><td>donors</td>
-          <td>phone, age, gender, weight, health_issue, eligibility_status, availability, address, city, state, pincode, nation</td>
-          <td>OneToOne → User; FK → BloodGroup</td>
+          <td>phone (unique), age, gender, weight, health_issue, health_issue_description, health_document (file), eligibility_status, availability, address, city, state, pincode, nation</td>
+          <td>OneToOne → User (related_name='donor_profile'); FK → BloodGroup</td>
         </tr>
         <tr>
           <td><strong>BloodGroup</strong></td><td>inventory</td>
@@ -572,17 +585,17 @@ code {
     </div>
     <div class="stat-card">
       <div class="stat-label">Database Models</div>
-      <div class="stat-value">9</div>
-      <div class="stat-desc">User, SecurityProfile, Donor, BloodGroup, BloodStock, BloodRequest, Donation, Notification, Rating</div>
+      <div class="stat-value">11</div>
+      <div class="stat-desc">User, AuditLog, SecurityProfile, ContactAdminMessage, Donor, BloodGroup, BloodStock, BloodRequest, Donation, Notification, Rating</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">HTML Templates</div>
-      <div class="stat-value">24</div>
+      <div class="stat-value">26</div>
       <div class="stat-desc">All user flows covered with base.html as master layout</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">URL Endpoints</div>
-      <div class="stat-value">22</div>
+      <div class="stat-value">32</div>
       <div class="stat-desc">Across all 6 apps plus Django admin panel</div>
     </div>
     <div class="stat-card">
@@ -592,8 +605,8 @@ code {
     </div>
     <div class="stat-card">
       <div class="stat-label">Security Layers</div>
-      <div class="stat-value">8+</div>
-      <div class="stat-desc">CSRF, hashing, brute-force protection, unique constraints, role checks, session-gating</div>
+      <div class="stat-value">9+</div>
+      <div class="stat-desc">CSRF, hashing, brute-force protection, unique constraints, role checks, session-gating, account deactivation</div>
     </div>
   </div>
 
@@ -606,9 +619,11 @@ code {
     <li>Strong password rules at registration only: min 8 chars, uppercase, lowercase, digit, special character</li>
     <li>Live password strength indicator (5 levels: Very Weak → Strong) with real-time checklist</li>
     <li>Confirm password field with live match indicator</li>
+    <li>Health document upload — when a donor declares a health issue, they can attach a medical certificate, prescription, or lab report (JPG, PNG, PDF — max 5 MB) with drag-and-drop support</li>
     <li>Role-based dashboard routing after login</li>
     <li>Secure logout via POST form — prevents CSRF-based forced logout</li>
     <li>Editable user profile page for name, email, and location</li>
+    <li>Separate requester registration page — patients register with name, email, phone, password, and security question only (no blood group or health details required)</li>
   </ul>
 
   <h3 class="sub-heading">Module 2 — Security Question Password Reset</h3>
@@ -639,6 +654,7 @@ code {
     <li>Eligibility check before donation — PENDING and REJECTED donors cannot donate</li>
     <li>Donor availability is set to Offline after donation for the recovery period</li>
     <li>In-app notification created automatically after each donation</li>
+    <li>Admin health approval page shows the donor's uploaded document (PDF opens in new tab, images shown as thumbnail) for informed decision-making</li>
     <li>Full donation history page showing date and units for each donation</li>
   </ul>
 
@@ -677,6 +693,26 @@ code {
     <li>One rating per request — prevents duplicate ratings</li>
     <li>Rating status shown in the My Requests page</li>
   </ul>
+
+  <h3 class="sub-heading">Module 9 — Contact Administrator (Deactivated Users)</h3>
+  <ul class="feat-list">
+    <li>When a deactivated user enters correct credentials, a yellow "Contact Administrator" button appears on the login page</li>
+    <li>Clicking it opens a dedicated contact form at <code>/contact-admin/</code> — name and phone are pre-filled automatically</li>
+    <li>User types a message explaining why they need reactivation and submits</li>
+    <li>Message is stored in the <code>ContactAdminMessage</code> database model with a read/unread status</li>
+    <li>Admin dashboard shows an unread message count badge on the "User Messages" stat card and quick-action card</li>
+    <li>Admin messages page (<code>/admin-messages/</code>) lists all messages — unread ones highlighted with a red left border and "New" badge</li>
+    <li>Admin can Mark as Read, Find User (searches donor list by phone), or Delete each message</li>
+    <li>No login required to submit a contact message — accessible to deactivated users who cannot log in</li>
+  </ul>
+
+  <h3 class="sub-heading">Module 10 — Donor Availability Toggle</h3>
+  <ul class="feat-list">
+    <li>Donors can toggle their availability status between Available and Unavailable from the dashboard</li>
+    <li>Availability is automatically set to Unavailable after a donation (90-day recovery period)</li>
+    <li>Only available and eligible donors appear in the public donor search</li>
+    <li>In-app notification created when availability is changed</li>
+  </ul>
 </section>
 
 <!-- ═══════════════════════════════════════════════════════
@@ -701,9 +737,13 @@ code {
         <tr><td><code>/forgot-password/</code></td><td>sq_lookup</td><td><span class="badge badge-gray">Public</span></td></tr>
         <tr><td><code>/forgot-password/question/</code></td><td>sq_answer</td><td><span class="badge badge-blue">Session-gated</span></td></tr>
         <tr><td><code>/forgot-password/reset/</code></td><td>sq_reset_password</td><td><span class="badge badge-blue">Session-gated</span></td></tr>
+        <tr><td><code>/contact-admin/</code></td><td>contact_admin</td><td><span class="badge badge-gray">Public</span></td></tr>
+        <tr><td><code>/admin-messages/</code></td><td>admin_contact_messages</td><td><span class="badge badge-red">Staff Only</span></td></tr>
         <tr><td><code>/admin-health-approvals/</code></td><td>admin_health_approvals</td><td><span class="badge badge-red">Staff Only</span></td></tr>
         <tr><td><code>/admin-all-donors/</code></td><td>admin_all_donors</td><td><span class="badge badge-red">Staff Only</span></td></tr>
         <tr><td><code>/export-donors/</code></td><td>export_donors_csv</td><td><span class="badge badge-red">Staff Only</span></td></tr>
+        <tr><td><code>/admin-audit-log/</code></td><td>audit_log</td><td><span class="badge badge-red">Staff Only</span></td></tr>
+        <tr><td><code>/admin-donors/toggle/&lt;id&gt;/</code></td><td>toggle_donor_active</td><td><span class="badge badge-red">Staff Only</span></td></tr>
       </tbody>
     </table>
   </div>
@@ -730,6 +770,7 @@ code {
         <tr><td><code>/requests/my-donations/</code></td><td>View donation history</td><td><span class="badge badge-blue">Donor Only</span></td></tr>
         <tr><td><code>/requests/request-blood/</code></td><td>Submit a blood request</td><td><span class="badge badge-blue">Login Required</span></td></tr>
         <tr><td><code>/requests/my-requests/</code></td><td>View my blood requests</td><td><span class="badge badge-blue">Login Required</span></td></tr>
+        <tr><td><code>/requests/toggle-availability/</code></td><td>Toggle donor availability on/off</td><td><span class="badge badge-blue">Donor Only</span></td></tr>
         <tr><td><code>/requests/admin-requests/</code></td><td>Approve or reject requests</td><td><span class="badge badge-red">Staff Only</span></td></tr>
         <tr><td><code>/requests/export-requests/</code></td><td>Export requests to CSV</td><td><span class="badge badge-red">Staff Only</span></td></tr>
       </tbody>
@@ -824,14 +865,14 @@ code {
 <section id="s8" class="pb">
   <div class="section-header">
     <div class="section-num">8</div>
-    <div class="section-title">External APIs &amp; Third-Party Services</div>
+    <div class="section-title">Pincode Auto-Fill &amp; CDN Services</div>
   </div>
 
   <h3 class="sub-heading">Pincode Auto-Fill (Registration Page)</h3>
   <p>
-    When a user types their 6-digit pincode during registration, the system automatically fetches
-    and fills in the city, state, and country. This is done entirely client-side using JavaScript
-    <code>fetch()</code> with a 400ms debounce to avoid excessive API calls.
+    When a user types their 6-digit Indian pincode during registration, the system automatically
+    fetches and fills in the city, state, and country. This is done entirely client-side using
+    JavaScript <code>fetch()</code> with a 500ms debounce to avoid excessive API calls.
   </p>
   <div class="tbl-wrap">
     <table>
@@ -854,7 +895,8 @@ code {
   </div>
   <div class="info-box">
     If both APIs fail, the city, state, and nation fields automatically unlock so the user can
-    type their location manually. The form never gets stuck.
+    type their location manually. The form never gets stuck. A spinner is shown while fetching,
+    a green success message confirms auto-fill, and a red error message prompts manual entry.
   </div>
 
   <h3 class="sub-heading">CDN Libraries (No Installation Required)</h3>
@@ -931,15 +973,17 @@ code {
     <li><strong>Data Tables</strong> — styled tables with alternating rows, badge status indicators, and action buttons</li>
   </ul>
 
-  <h3 class="sub-heading">All 24 Templates</h3>
+  <h3 class="sub-heading">All 26 Templates</h3>
   <div class="tbl-wrap">
     <table>
       <thead><tr><th>Template File</th><th>Purpose</th></tr></thead>
       <tbody>
         <tr><td><code>base.html</code></td><td>Master layout — navbar, footer, flash messages, dark mode script, CDN links</td></tr>
-        <tr><td><code>login.html</code></td><td>Login form — accepts phone number or full name</td></tr>
-        <tr><td><code>register.html</code></td><td>Full donor registration with strength indicator, pincode auto-fill, security question</td></tr>
-        <tr><td><code>admin_dashboard.html</code></td><td>Admin quick-action navigation cards</td></tr>
+        <tr><td><code>login.html</code></td><td>Login form — accepts phone number or full name; shows "Contact Administrator" button for deactivated accounts</td></tr>
+        <tr><td><code>register.html</code></td><td>Full donor registration with strength indicator, pincode auto-fill, health document upload, security question</td></tr>
+        <tr><td><code>contact_admin.html</code></td><td>Contact form for deactivated users — pre-filled name and phone, message to admin</td></tr>
+        <tr><td><code>admin_dashboard.html</code></td><td>Admin quick-action navigation cards with live stats including unread message count</td></tr>
+        <tr><td><code>admin_contact_messages.html</code></td><td>Admin inbox for deactivated user messages — mark read, find user, delete</td></tr>
         <tr><td><code>donor_dashboard.html</code></td><td>Donor quick-action cards with eligibility status badge</td></tr>
         <tr><td><code>requester_dashboard.html</code></td><td>Requester quick-action cards</td></tr>
         <tr><td><code>profile.html</code></td><td>Editable user profile page</td></tr>
@@ -952,8 +996,8 @@ code {
         <tr><td><code>request_blood.html</code></td><td>Form to submit a blood request</td></tr>
         <tr><td><code>my_requests.html</code></td><td>User's request history with status and rate button</td></tr>
         <tr><td><code>admin_requests.html</code></td><td>Admin approve/reject requests table</td></tr>
-        <tr><td><code>admin_all_donors.html</code></td><td>Admin searchable donor database with CSV export</td></tr>
-        <tr><td><code>admin_health_approvals.html</code></td><td>Admin health eligibility review table</td></tr>
+        <tr><td><code>admin_all_donors.html</code></td><td>Admin searchable donor database with CSV export and activate/deactivate toggle</td></tr>
+        <tr><td><code>admin_health_approvals.html</code></td><td>Admin health eligibility review table with document preview</td></tr>
         <tr><td><code>donor_search.html</code></td><td>Public donor search with filters</td></tr>
         <tr><td><code>notifications.html</code></td><td>Notification inbox with mark-read actions</td></tr>
         <tr><td><code>rate_blood_request.html</code></td><td>Star rating form for approved requests</td></tr>
@@ -987,6 +1031,8 @@ code {
         <tr><td><code>SECRET_KEY</code></td><td>Django secret key for cryptographic signing</td><td>Insecure default — change in production</td></tr>
         <tr><td><code>DEBUG</code></td><td>Enable/disable debug mode</td><td>True</td></tr>
         <tr><td><code>ALLOWED_HOSTS</code></td><td>Comma-separated list of allowed hostnames</td><td>localhost,127.0.0.1</td></tr>
+        <tr><td><code>MEDIA_URL</code></td><td>URL prefix for uploaded media files</td><td>/media/</td></tr>
+        <tr><td><code>MEDIA_ROOT</code></td><td>Filesystem path where uploaded files are stored</td><td>BASE_DIR / media</td></tr>
       </tbody>
     </table>
   </div>
@@ -1010,24 +1056,39 @@ code {
     <table>
       <thead><tr><th>#</th><th>Bug Description</th><th>Fix Applied</th></tr></thead>
       <tbody>
-        <tr><td>1</td><td><code>make_list</code> template filter used in rate_blood_request.html — this filter does not exist in Django</td><td>Replaced with hardcoded radio inputs for each star value</td></tr>
-        <tr><td>2</td><td>Logout link was a GET <code>&lt;a&gt;</code> tag — caused HTTP 405 error in Django 4.1+ (logout requires POST)</td><td>Replaced with a POST form button in base.html</td></tr>
-        <tr><td>3</td><td>Hardcoded URLs in admin_dashboard.html (<code>/inventory/blood-stock/</code>, <code>/requests/admin-requests/</code>)</td><td>Replaced with <code>{% url %}</code> template tags</td></tr>
-        <tr><td>4</td><td><code>Donor.objects.get(user=request.user)</code> in add_donation/my_donations — crashed for non-donor users</td><td>Added role check and try/except DoesNotExist</td></tr>
-        <tr><td>5</td><td>Missing <code>related_name='donor'</code> on Donor.user — <code>request.user.donor</code> failed in templates</td><td>Added related_name and created a new migration</td></tr>
-        <tr><td>6</td><td><code>LOGIN_URL = 'login'</code> (URL name) caused PasswordResetConfirmView to redirect to <code>/password/login/</code> (404)</td><td>Changed to <code>LOGIN_URL = '/'</code> (actual path)</td></tr>
-        <tr><td>7</td><td>my_requests.html table had 4 header columns but 5 data columns</td><td>Added the missing Urgency header</td></tr>
-        <tr><td>8</td><td>admin_requests.html empty state colspan was 5 but the table has 6 columns</td><td>Fixed colspan to 6</td></tr>
-        <tr><td>9</td><td>Dark mode: Bootstrap utility classes (<code>bg-light</code>, <code>text-dark</code>) ignored CSS variables</td><td>Added comprehensive <code>[data-theme="dark"]</code> overrides in style.css</td></tr>
-        <tr><td>10</td><td>Duplicate email and phone allowed at registration — no uniqueness check</td><td>Added view-level checks and DB-level <code>unique=True</code> on email with a data migration</td></tr>
-        <tr><td>11</td><td><code>BloodGroup.objects.get(id=group_id)</code> in inventory/views.py — no error handling for invalid ID</td><td>Wrapped in try/except DoesNotExist</td></tr>
-        <tr><td>12</td><td>Google Fonts (Inter) referenced in CSS but the <code>&lt;link&gt;</code> tag was missing from base.html</td><td>Added the link tag to base.html and removed the duplicate @import from style.css</td></tr>
-        <tr><td>13</td><td>Dead dashboard.html template with broken hardcoded URLs — never actually used by any view</td><td>Deleted the file</td></tr>
-        <tr><td>14</td><td>Bare <code>except: pass</code> in requests_app/views.py silently swallowed all exceptions</td><td>Changed to <code>except Exception: pass</code></td></tr>
-        <tr><td>15</td><td><code>import re</code> placed after third-party imports in accounts/views.py</td><td>Moved to the stdlib imports section at the top</td></tr>
-        <tr><td>16</td><td>Stale development comment left in notifications/views.py</td><td>Removed the comment</td></tr>
-        <tr><td>17</td><td>Pincode auto-fill used a single unreliable API — failed silently with no fallback</td><td>Added Nominatim (OpenStreetMap) as fallback, 400ms debounce, and manual entry fallback</td></tr>
-        <tr><td>18</td><td>Gmail SMTP email feature added then removed — left dead imports, send_mail calls, and email config in settings</td><td>Removed all email code from both view files and settings.py</td></tr>
+        <tr><td>1</td><td>Syntax error in validate_strong_password() — <code>errors.ain</code> instead of <code>errors.append</code></td><td>Fixed typo to <code>errors.append("Contain at least one uppercase letter (A–Z).")</code></td></tr>
+        <tr><td>2</td><td>Missing variable assignment — <code>confirm_password</code> was on separate line without assignment</td><td>Fixed to <code>confirm_password = request.POST.get('confirm_password', '')</code></td></tr>
+        <tr><td>3</td><td>Incomplete field_errors key — <code>one'] = 'Mobile number is required.'</code></td><td>Fixed to <code>field_errors['phone'] = 'Mobile number is required.'</code></td></tr>
+        <tr><td>4</td><td>Typo in messages module — <code>mesages.success</code> instead of <code>messages.success</code></td><td>Fixed typo in register view</td></tr>
+        <tr><td>5</td><td>Incomplete error message string — <code>hone number or email.'</code></td><td>Fixed to <code>'No account found with that phone number or email.'</code></td></tr>
+        <tr><td>6</td><td>Incomplete if condition — <code>ttempts >= SQ_MAX_ATTEMPTS:</code></td><td>Fixed to <code>if sp.reset_attempts >= SQ_MAX_ATTEMPTS:</code></td></tr>
+        <tr><td>7</td><td>Typo in donor.save() — <code>onor.save()</code></td><td>Fixed to <code>donor.save()</code></td></tr>
+        <tr><td>8</td><td>Incomplete redirect — <code>return reard')</code></td><td>Fixed to <code>return redirect('dashboard')</code></td></tr>
+        <tr><td>9</td><td>Incomplete return statement — <code>turn render(...)</code></td><td>Fixed to <code>return render(request, 'audit_log.html', {'logs': logs})</code></td></tr>
+        <tr><td>10</td><td>Incomplete assignment — <code>.get('address')</code> on separate line</td><td>Fixed to <code>donor.address = request.POST.get('address')</code></td></tr>
+        <tr><td>11</td><td>Incomplete line at end of profile view — <code>donor.address = request.POST</code></td><td>Removed duplicate incomplete line and added missing <code>donor.nation</code> field</td></tr>
+        <tr><td>12</td><td>Missing related_name on Donor.user OneToOneField — reverse lookup failed</td><td>Added <code>related_name='donor_profile'</code> to Donor model</td></tr>
+        <tr><td>13</td><td>Phone number not unique in Donor model — duplicate phone numbers possible</td><td>Added <code>unique=True</code> to phone field in Donor model</td></tr>
+        <tr><td>14</td><td>Pincode auto-fill was removed during a cleanup session, breaking the registration UX</td><td>Restored pincode auto-fill with postalpincode.in as primary, Nominatim as fallback, 500ms debounce, spinner, and manual entry fallback if both APIs fail</td></tr>
+        <tr><td>15</td><td>Duplicate sections in register.html — security question and location fields repeated twice</td><td>Removed duplicate sections and cleaned up template structure</td></tr>
+        <tr><td>16</td><td>Login by full name not working — authentication logic was correct but syntax errors prevented execution</td><td>All syntax errors fixed; login now properly supports phone number OR full name</td></tr>
+        <tr><td>17</td><td><code>make_list</code> template filter used in rate_blood_request.html — this filter does not exist in Django</td><td>Replaced with hardcoded radio inputs for each star value</td></tr>
+        <tr><td>18</td><td>Logout link was a GET <code>&lt;a&gt;</code> tag — caused HTTP 405 error in Django 4.1+ (logout requires POST)</td><td>Replaced with a POST form button in base.html</td></tr>
+        <tr><td>19</td><td>Hardcoded URLs in admin_dashboard.html (<code>/inventory/blood-stock/</code>, <code>/requests/admin-requests/</code>)</td><td>Replaced with <code>{% url %}</code> template tags</td></tr>
+        <tr><td>20</td><td><code>Donor.objects.get(user=request.user)</code> in add_donation/my_donations — crashed for non-donor users</td><td>Added role check and try/except DoesNotExist</td></tr>
+        <tr><td>21</td><td><code>LOGIN_URL = 'login'</code> (URL name) caused PasswordResetConfirmView to redirect to <code>/password/login/</code> (404)</td><td>Changed to <code>LOGIN_URL = '/'</code> (actual path)</td></tr>
+        <tr><td>22</td><td>my_requests.html table had 4 header columns but 5 data columns</td><td>Added the missing Urgency header</td></tr>
+        <tr><td>23</td><td>admin_requests.html empty state colspan was 5 but the table has 6 columns</td><td>Fixed colspan to 6</td></tr>
+        <tr><td>24</td><td>Dark mode: Bootstrap utility classes (<code>bg-light</code>, <code>text-dark</code>) ignored CSS variables</td><td>Added comprehensive <code>[data-theme="dark"]</code> overrides in style.css</td></tr>
+        <tr><td>25</td><td>Duplicate email and phone allowed at registration — no uniqueness check</td><td>Added view-level checks and DB-level <code>unique=True</code> on email with a data migration</td></tr>
+        <tr><td>26</td><td><code>BloodGroup.objects.get(id=group_id)</code> in inventory/views.py — no error handling for invalid ID</td><td>Wrapped in try/except DoesNotExist</td></tr>
+        <tr><td>27</td><td>Google Fonts (Inter) referenced in CSS but the <code>&lt;link&gt;</code> tag was missing from base.html</td><td>Added the link tag to base.html and removed the duplicate @import from style.css</td></tr>
+        <tr><td>28</td><td>User and Donor creation in register view not wrapped in a transaction — orphaned User records possible if Donor creation failed</td><td>Wrapped entire user/donor/security profile creation in <code>transaction.atomic()</code></td></tr>
+        <tr><td>29</td><td>blood_availability.html used Django template tags inside CSS style attribute — caused CSS parse errors and broken border colours</td><td>Replaced inline style with Bootstrap border utility classes (<code>border-danger</code>, <code>border-warning</code>, <code>border-success</code>)</td></tr>
+        <tr><td>30</td><td>donor_dashboard.html used <code>request.user.donor</code> which does not exist on the User model — caused AttributeError</td><td>Changed to use <code>donor</code> context variable passed from the dashboard view</td></tr>
+        <tr><td>31</td><td>Health document upload feature added — donors with health issues can attach supporting medical files during registration</td><td>Added <code>health_document</code> FileField to Donor model, MEDIA_ROOT/MEDIA_URL config, drag-and-drop upload UI, server-side file type and size validation, and document preview in admin health approvals page</td></tr>
+        <tr><td>32</td><td>Deactivated users had no way to contact the administrator — they were simply shown an error message with no action</td><td>Added <code>ContactAdminMessage</code> model, <code>contact_admin</code> view, and <code>admin_contact_messages</code> view; login page now shows a "Contact Administrator" button for deactivated accounts; admin dashboard shows unread message count badge</td></tr>
+        <tr><td>33</td><td>Pincode auto-fill was removed during a cleanup session, breaking the registration UX — city, state, and nation fields had no auto-fill</td><td>Restored pincode auto-fill with postalpincode.in as primary source, Nominatim (OpenStreetMap) as fallback, 500ms debounce, loading spinner, and manual entry fallback if both APIs fail</td></tr>
       </tbody>
     </table>
   </div>
@@ -1038,7 +1099,7 @@ code {
 ════════════════════════════════════════════════════════ -->
 <div class="footer">
   <p><strong>Blood Bank Management System</strong> &nbsp;·&nbsp; Django 6.0 + Python 3.13 + Bootstrap 5.3</p>
-  <p>College Project &nbsp;·&nbsp; 10 Sections &nbsp;·&nbsp; 9 Models &nbsp;·&nbsp; 24 Templates &nbsp;·&nbsp; 18 Bugs Fixed</p>
+  <p>College Project &nbsp;·&nbsp; 10 Sections &nbsp;·&nbsp; 11 Models &nbsp;·&nbsp; 26 Templates &nbsp;·&nbsp; 32 Endpoints &nbsp;·&nbsp; 33 Bugs Fixed</p>
 </div>
 
 </div><!-- /page -->

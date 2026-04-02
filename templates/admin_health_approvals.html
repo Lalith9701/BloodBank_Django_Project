@@ -43,6 +43,26 @@
                             <div class="text-muted small text-start p-2 border rounded bg-light" style="max-width: 300px; max-height: 80px; overflow-y: auto;">
                                 {{ donor.health_issue_description|default:"No details provided." }}
                             </div>
+                            {% if donor.health_document %}
+                                <div class="mt-2">
+                                    {% with donor.health_document.name as doc_name %}
+                                        {% if doc_name|lower|slice:"-4:" == ".pdf" %}
+                                            <a href="{{ donor.health_document.url }}" target="_blank"
+                                               class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold">
+                                                <i class="bi bi-file-earmark-pdf-fill me-1"></i> View PDF
+                                            </a>
+                                        {% else %}
+                                            <a href="{{ donor.health_document.url }}" target="_blank">
+                                                <img src="{{ donor.health_document.url }}"
+                                                     alt="Health Document"
+                                                     style="max-width:120px;max-height:80px;border-radius:6px;border:1px solid #e2e8f0;object-fit:cover;">
+                                            </a>
+                                        {% endif %}
+                                    {% endwith %}
+                                </div>
+                            {% else %}
+                                <div class="text-muted small mt-1"><i class="bi bi-paperclip me-1"></i>No document uploaded</div>
+                            {% endif %}
                         </td>
                         <td>
                             <span class="badge bg-warning text-dark px-3 py-2 rounded-pill shadow-sm">

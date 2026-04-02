@@ -6,8 +6,7 @@ urlpatterns = [
     path('my-donations/', views.my_donations, name='my_donations'),
     path('request-blood/', views.request_blood, name='request_blood'),
     path('my-requests/', views.my_requests, name='my_requests'),
-
-    # ✅ THIS IS MISSING IN YOUR PROJECT RIGHT NOW
+    path('toggle-availability/', views.toggle_availability, name='toggle_availability'),
     path('admin-requests/', views.admin_requests, name='admin_requests'),
     path('export-requests/', views.export_requests_csv, name='export_requests_csv'),
 ]

@@ -3,16 +3,21 @@ from accounts.models import User
 from inventory.models import BloodGroup
 
 class Donor(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='donor_profile')
     blood_group = models.ForeignKey(BloodGroup, on_delete=models.CASCADE)
 
-    phone = models.CharField(max_length=15)
+    phone = models.CharField(max_length=15, unique=True)
     age = models.PositiveIntegerField()
     gender = models.CharField(max_length=10)
     weight = models.FloatField()
 
     health_issue = models.BooleanField(default=False)
     health_issue_description = models.TextField(blank=True, null=True)
+    health_document = models.FileField(
+        upload_to='health_documents/',
+        blank=True, null=True,
+        help_text='Medical certificate, prescription, or any supporting document (PDF, JPG, PNG)'
+    )
     
     ELIGIBILITY_CHOICES = (
         ('ELIGIBLE', 'Eligible'),

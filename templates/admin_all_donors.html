@@ -38,6 +38,7 @@
                         <th>Age / Weight</th>
                         <th>Health Details</th>
                         <th>Eligibility</th>
+                        <th>Status</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -84,10 +85,24 @@
                                     <i class="bi bi-x-circle-fill me-1"></i> Rejected
                                 </span>
                             {% else %}
-                                <span class="badge bg-secondary px-3 py-2 rounded-pill shadow-sm">
-                                    Unknown
-                                </span>
+                                <span class="badge bg-secondary px-3 py-2 rounded-pill shadow-sm">Unknown</span>
                             {% endif %}
+                        </td>
+                        <td>
+                            <form method="POST" action="{% url 'toggle_donor_active' donor.id %}" class="m-0">
+                                {% csrf_token %}
+                                {% if donor.user.is_active %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold"
+                                        onclick="return confirm('Deactivate this donor account?')">
+                                        <i class="bi bi-person-x-fill me-1"></i> Deactivate
+                                    </button>
+                                {% else %}
+                                    <button type="submit" class="btn btn-sm btn-outline-success rounded-pill px-3 fw-bold"
+                                        onclick="return confirm('Reactivate this donor account?')">
+                                        <i class="bi bi-person-check-fill me-1"></i> Activate
+                                    </button>
+                                {% endif %}
+                            </form>
                         </td>
                     </tr>
                     

@@ -2,23 +2,55 @@
 {% block title %}Donor Dashboard | Blood Bank{% endblock %}
 
 {% block content %}
-<div class="row mb-5 align-items-center border-bottom pb-4 mt-3">
+<div class="row mb-4 align-items-center border-bottom pb-4 mt-3">
     <div class="col-md-8">
         <h2 class="text-dark fw-bold mb-1" style="font-size: 2.5rem;">
             Welcome, <span style="color: var(--primary);">{{ request.user.get_full_name|default:request.user.username }}</span>!
         </h2>
-        <p class="text-muted fs-5 mb-0 d-flex align-items-center">
-            <i class="bi bi-person-badge-fill me-2" style="color: var(--primary);"></i> Donor Dashboard
-            
-            {% if request.user.donor %}
-                {% if request.user.donor.eligibility_status == 'PENDING' %}
-                    <span class="badge bg-warning text-dark ms-3 fs-6 rounded-pill shadow-sm"><i class="bi bi-hourglass-split me-1"></i> Health Approval Pending</span>
-                {% elif request.user.donor.eligibility_status == 'REJECTED' %}
-                    <span class="badge bg-danger ms-3 fs-6 rounded-pill shadow-sm"><i class="bi bi-x-circle-fill me-1"></i> Health Status Rejected</span>
+        <p class="text-muted fs-5 mb-0 d-flex align-items-center flex-wrap gap-2">
+            <i class="bi bi-person-badge-fill me-1" style="color: var(--primary);"></i> Donor Dashboard
+            {% if donor %}
+                {% if donor.eligibility_status == 'PENDING' %}
+                    <span class="badge bg-warning text-dark fs-6 rounded-pill shadow-sm"><i class="bi bi-hourglass-split me-1"></i> Health Approval Pending</span>
+                {% elif donor.eligibility_status == 'REJECTED' %}
+                    <span class="badge bg-danger fs-6 rounded-pill shadow-sm"><i class="bi bi-x-circle-fill me-1"></i> Health Status Rejected</span>
                 {% endif %}
+            {% endif %}
+            {% if has_emergency %}
+                <span class="badge bg-danger fs-6 rounded-pill shadow-sm animate-pulse">
+                    <i class="bi bi-exclamation-octagon-fill me-1"></i> Emergency Blood Needed!
+                </span>
             {% endif %}
         </p>
     </div>
+
+    <!-- Availability Toggle — top right -->
+    {% if donor %}
+    <div class="col-md-4 text-md-end mt-3 mt-md-0">
+        <div class="d-inline-flex align-items-center gap-3 premium-card px-4 py-3 shadow-sm">
+            <div>
+                <div class="text-muted small fw-bold text-uppercase" style="font-size:0.7rem;letter-spacing:.5px;">Your Availability</div>
+                {% if donor.availability %}
+                    <div class="fw-bold text-success"><i class="bi bi-circle-fill me-1" style="font-size:.6rem;"></i> Available</div>
+                {% else %}
+                    <div class="fw-bold text-danger"><i class="bi bi-circle-fill me-1" style="font-size:.6rem;"></i> Unavailable</div>
+                {% endif %}
+            </div>
+            <form method="POST" action="{% url 'toggle_availability' %}" class="m-0">
+                {% csrf_token %}
+                {% if donor.availability %}
+                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold">
+                        <i class="bi bi-toggle-on me-1"></i> Set Unavailable
+                    </button>
+                {% else %}
+                    <button type="submit" class="btn btn-sm btn-outline-success rounded-pill px-3 fw-bold">
+                        <i class="bi bi-toggle-off me-1"></i> Set Available
+                    </button>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+    {% endif %}
 </div>
 
 <div class="row justify-content-center g-4 mb-5">

@@ -5,30 +5,27 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.contrib import messages
 from django.http import HttpResponse
+from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 import csv
 import logging
 import re
 
-from inventory.models import BloodGroup
+from inventory.models import BloodGroup, BloodStock
 from donors.models import Donor
 from notifications.models import Notification
-from .models import SecurityProfile, SECURITY_QUESTIONS
+from requests_app.models import BloodRequest, Donation
+from .models import SecurityProfile, SECURITY_QUESTIONS, AuditLog, ContactAdminMessage
 
 User = get_user_model()
 logger = logging.getLogger('accounts')
 
-# Brute-force lockout: 3 wrong answers → 15-minute lockout
 SQ_MAX_ATTEMPTS = 3
 SQ_LOCKOUT_MINS = 15
 
 
 def validate_strong_password(password: str) -> list[str]:
-    """
-    Returns a list of error strings. Empty list = valid.
-    Only used during registration — does NOT affect login or reset flows.
-    """
     errors = []
     if len(password) < 8:
         errors.append("Be at least 8 characters long.")
@@ -44,38 +41,61 @@ def validate_strong_password(password: str) -> list[str]:
 
 
 # ============================================================
-# LOGIN
+# LOGIN  — supports phone number OR full name
 # ============================================================
 def login_view(request):
     if request.method == 'POST':
         login_id = request.POST.get('username', '').strip()
-        password = request.POST.get('password')
+        password = request.POST.get('password', '')
 
+        if not login_id or not password:
+            return render(request, 'login.html', {
+                'error': 'Please enter your login ID and password.'
+            })
+
+        # ── Step 1: try phone number (username) directly ──
         user = authenticate(request, username=login_id, password=password)
 
+        # ── Step 2: try full name lookup ──────────────────
         if not user:
             normalized = ' '.join(login_id.split())
-            name_parts = normalized.split(' ', 1)
-            first_name = name_parts[0]
-            last_name  = name_parts[1] if len(name_parts) > 1 else ''
+            parts      = normalized.split(' ', 1)
+            first      = parts[0]
+            last       = parts[1] if len(parts) > 1 else ''
 
-            qs = (User.objects.filter(first_name__iexact=first_name, last_name__iexact=last_name)
-                  if last_name else
-                  User.objects.filter(first_name__iexact=first_name))
+            candidates = (
+                User.objects.filter(first_name__iexact=first, last_name__iexact=last)
+                if last else
+                User.objects.filter(first_name__iexact=first)
+            )
 
-            for p_user in qs:
-                authed = authenticate(request, username=p_user.username, password=password)
-                if authed:
-                    user = authed
+            for candidate in candidates:
+                result = authenticate(request, username=candidate.username, password=password)
+                if result:
+                    user = result
                     break
 
+        # ── Step 3: handle result ─────────────────────────
         if user:
             login(request, user)
             next_url = request.POST.get('next') or request.GET.get('next')
             return redirect(next_url if next_url else 'dashboard')
 
+        # Check if account exists but is deactivated
+        try:
+            raw = User.objects.get(username=login_id)
+            if raw.check_password(password) and not raw.is_active:
+                return render(request, 'login.html', {
+                    'error': 'Your account has been deactivated. Contact the administrator.',
+                    'deactivated': True,
+                    'deactivated_name': raw.get_full_name() or raw.username,
+                    'deactivated_phone': raw.username,
+                })
+        except User.DoesNotExist:
+            pass
+
         return render(request, 'login.html', {
-            'error': 'Invalid credentials. Try your phone number or full name.'
+            'error': 'Invalid credentials. Use your phone number or full name.'
         })
 
     return render(request, 'login.html')
@@ -89,9 +109,9 @@ def register(request):
 
     if request.method == 'POST':
         full_name         = request.POST.get('full_name', '').strip()
-        name_parts        = full_name.split(' ', 1)
-        first_name        = name_parts[0].strip()
-        last_name         = name_parts[1].strip() if len(name_parts) > 1 else ''
+        parts             = full_name.split(' ', 1)
+        first_name        = parts[0].strip()
+        last_name         = parts[1].strip() if len(parts) > 1 else ''
         email             = request.POST.get('email', '').strip().lower()
         password          = request.POST.get('password', '')
         confirm_password  = request.POST.get('confirm_password', '')
@@ -109,6 +129,7 @@ def register(request):
         nation            = request.POST.get('nation')
         question_key      = request.POST.get('security_question')
         sq_answer         = request.POST.get('security_answer', '').strip()
+        health_document   = request.FILES.get('health_document')
 
         field_errors = {}
 
@@ -125,8 +146,7 @@ def register(request):
             field_errors['email'] = 'This email is already registered.'
 
         if first_name and User.objects.filter(
-            first_name__iexact=first_name,
-            last_name__iexact=last_name
+            first_name__iexact=first_name, last_name__iexact=last_name
         ).exists():
             field_errors['full_name'] = 'A user with this full name already exists.'
 
@@ -142,6 +162,14 @@ def register(request):
         if not sq_answer:
             field_errors['security_answer'] = 'Security answer is required.'
 
+        has_health_issue = (health_issue == "True")
+        if has_health_issue and health_document:
+            allowed = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf']
+            if health_document.content_type not in allowed:
+                field_errors['health_document'] = 'Only JPG, PNG, or PDF files are allowed.'
+            elif health_document.size > 5 * 1024 * 1024:
+                field_errors['health_document'] = 'File size must not exceed 5 MB.'
+
         if field_errors:
             return render(request, 'register.html', {
                 'blood_groups': blood_groups,
@@ -150,28 +178,27 @@ def register(request):
                 'form_data': request.POST,
             })
 
-        has_health_issue = (health_issue == "True")
-        eligibility      = 'PENDING' if has_health_issue else 'ELIGIBLE'
+        eligibility = 'PENDING' if has_health_issue else 'ELIGIBLE'
 
-        user = User.objects.create_user(
-            username=phone, password=password,
-            first_name=first_name, last_name=last_name,
-            email=email, role='DONOR'
-        )
-
-        Donor.objects.create(
-            user=user, phone=phone, blood_group_id=blood_group_id,
-            age=age, gender=gender, weight=weight,
-            health_issue=has_health_issue,
-            health_issue_description=health_issue_desc,
-            eligibility_status=eligibility,
-            address=address, pincode=pincode,
-            city=city, state=state, nation=nation
-        )
-
-        sp = SecurityProfile(user=user, question_key=question_key)
-        sp.set_answer(sq_answer)
-        sp.save()
+        with transaction.atomic():
+            user = User.objects.create_user(
+                username=phone, password=password,
+                first_name=first_name, last_name=last_name,
+                email=email, role='DONOR'
+            )
+            Donor.objects.create(
+                user=user, phone=phone, blood_group_id=blood_group_id,
+                age=age, gender=gender, weight=weight,
+                health_issue=has_health_issue,
+                health_issue_description=health_issue_desc,
+                health_document=health_document if has_health_issue else None,
+                eligibility_status=eligibility,
+                address=address, pincode=pincode,
+                city=city, state=state, nation=nation
+            )
+            sp = SecurityProfile(user=user, question_key=question_key)
+            sp.set_answer(sq_answer)
+            sp.save()
 
         logger.info(f"New donor registered: {phone}")
         messages.success(request, 'Registration successful! Please log in.')
@@ -191,12 +218,38 @@ def register(request):
 @login_required
 def dashboard(request):
     user = request.user
+
+    if not user.role:
+        return redirect('login')
+
     if user.role == 'ADMIN':
-        return render(request, 'admin_dashboard.html')
+        stats = {
+            'total_donors':     Donor.objects.count(),
+            'total_requests':   BloodRequest.objects.count(),
+            'pending_requests': BloodRequest.objects.filter(status='PENDING').count(),
+            'pending_health':   Donor.objects.filter(eligibility_status='PENDING').count(),
+            'total_donations':  Donation.objects.count(),
+            'low_stock':        BloodStock.objects.filter(units_available__lt=5).count(),
+            'unread_messages':  ContactAdminMessage.objects.filter(is_read=False).count(),
+        }
+        return render(request, 'admin_dashboard.html', {'stats': stats})
+
     elif user.role == 'DONOR':
-        return render(request, 'donor_dashboard.html')
+        has_emergency = BloodRequest.objects.filter(
+            status='PENDING', urgency='EMERGENCY'
+        ).exists()
+        try:
+            donor = Donor.objects.get(user=user)
+        except Donor.DoesNotExist:
+            donor = None
+        return render(request, 'donor_dashboard.html', {
+            'has_emergency': has_emergency,
+            'donor': donor,
+        })
+
     elif user.role == 'REQUESTER':
         return render(request, 'requester_dashboard.html')
+
     return redirect('login')
 
 
@@ -210,17 +263,16 @@ def logout_view(request):
 
 
 # ============================================================
-# FORGOT PASSWORD — Step 1: Enter phone / email
+# FORGOT PASSWORD — Step 1
 # ============================================================
 def sq_lookup(request):
     if request.method == 'POST':
         identifier = request.POST.get('identifier', '').strip()
-
         user = (User.objects.filter(username=identifier).first() or
                 User.objects.filter(email__iexact=identifier).first())
 
         if not user:
-            logger.warning(f"Security question lookup for unknown identifier: {identifier}")
+            logger.warning(f"SQ lookup for unknown: {identifier}")
             return render(request, 'sq_lookup.html', {
                 'error': 'No account found with that phone number or email.'
             })
@@ -229,24 +281,23 @@ def sq_lookup(request):
             sp = user.security_profile
         except SecurityProfile.DoesNotExist:
             return render(request, 'sq_lookup.html', {
-                'error': 'This account has no security question set. Please contact support.'
+                'error': 'This account has no security question set. Contact support.'
             })
 
         if sp.locked_until and timezone.now() < sp.locked_until:
             remaining = int((sp.locked_until - timezone.now()).total_seconds() // 60) + 1
             return render(request, 'sq_lookup.html', {
-                'error': f'Account temporarily locked. Try again in {remaining} minute(s).'
+                'error': f'Account locked. Try again in {remaining} minute(s).'
             })
 
         request.session['sq_username'] = user.username
-        logger.info(f"Security question lookup for: {user.username}")
         return redirect('sq_answer')
 
     return render(request, 'sq_lookup.html')
 
 
 # ============================================================
-# FORGOT PASSWORD — Step 2: Answer the security question
+# FORGOT PASSWORD — Step 2
 # ============================================================
 def sq_answer(request):
     username = request.session.get('sq_username')
@@ -268,20 +319,16 @@ def sq_answer(request):
 
     if request.method == 'POST':
         answer = request.POST.get('answer', '').strip()
-
         if sp.check_answer(answer):
             sp.reset_attempts = 0
             sp.locked_until   = None
             sp.save()
             request.session['sq_verified'] = username
             del request.session['sq_username']
-            logger.info(f"Security question answered correctly for: {username}")
             return redirect('sq_reset_password')
         else:
             sp.reset_attempts += 1
             remaining = SQ_MAX_ATTEMPTS - sp.reset_attempts
-            logger.warning(f"Wrong security answer for: {username} | attempts: {sp.reset_attempts}")
-
             if sp.reset_attempts >= SQ_MAX_ATTEMPTS:
                 sp.locked_until   = timezone.now() + timezone.timedelta(minutes=SQ_LOCKOUT_MINS)
                 sp.reset_attempts = 0
@@ -290,7 +337,6 @@ def sq_answer(request):
                 return render(request, 'sq_lookup.html', {
                     'error': f'Too many wrong answers. Account locked for {SQ_LOCKOUT_MINS} minutes.'
                 })
-
             sp.save()
             return render(request, 'sq_answer.html', {
                 'question': sp.question_text,
@@ -301,7 +347,7 @@ def sq_answer(request):
 
 
 # ============================================================
-# FORGOT PASSWORD — Step 3: Set new password
+# FORGOT PASSWORD — Step 3
 # ============================================================
 def sq_reset_password(request):
     username = request.session.get('sq_verified')
@@ -329,7 +375,6 @@ def sq_reset_password(request):
         user.set_password(p1)
         user.save()
         del request.session['sq_verified']
-        logger.info(f"Password reset via security question for: {username}")
         messages.success(request, 'Password updated successfully. Please log in.')
         return redirect('login')
 
@@ -357,6 +402,10 @@ def admin_health_approvals(request):
                     message='Your health eligibility has been approved. You can now donate blood.',
                     notif_type='success'
                 )
+                AuditLog.objects.create(
+                    actor=request.user, action='Health Approved',
+                    target=f'Donor: {donor.user.get_full_name() or donor.user.username}'
+                )
             elif action == 'reject':
                 donor.eligibility_status = 'REJECTED'
                 donor.save()
@@ -364,6 +413,10 @@ def admin_health_approvals(request):
                     user=donor.user, title='Health Status Rejected',
                     message='Your health eligibility has been rejected by the admin.',
                     notif_type='danger'
+                )
+                AuditLog.objects.create(
+                    actor=request.user, action='Health Rejected',
+                    target=f'Donor: {donor.user.get_full_name() or donor.user.username}'
                 )
         except Donor.DoesNotExist:
             pass
@@ -406,11 +459,52 @@ def export_donors_csv(request):
     writer.writerow(['Full Name', 'Phone', 'Email', 'Blood Group', 'City', 'Status'])
     for d in Donor.objects.all().select_related('user', 'blood_group'):
         writer.writerow([
-            f"{d.user.first_name} {d.user.last_name}",
+            f"{d.user.first_name} {d.user.last_name}".strip(),
             d.phone, d.user.email,
-            d.blood_group.blood_group, d.city, d.eligibility_status
+            d.blood_group.blood_group, d.city or '', d.eligibility_status
         ])
     return response
+
+
+# ============================================================
+# ADMIN AUDIT LOG
+# ============================================================
+@login_required
+def audit_log(request):
+    if not request.user.is_staff:
+        return redirect('dashboard')
+    logs = AuditLog.objects.select_related('actor').all()[:200]
+    return render(request, 'audit_log.html', {'logs': logs})
+
+
+# ============================================================
+# ACCOUNT DEACTIVATION / REACTIVATION
+# ============================================================
+@login_required
+def toggle_donor_active(request, donor_id):
+    if not request.user.is_staff:
+        return redirect('dashboard')
+    try:
+        donor = Donor.objects.select_related('user').get(id=donor_id)
+        donor.user.is_active = not donor.user.is_active
+        donor.user.save()
+        action = 'Activated' if donor.user.is_active else 'Deactivated'
+        AuditLog.objects.create(
+            actor=request.user,
+            action=f'Account {action}',
+            target=f'Donor: {donor.user.get_full_name() or donor.user.username}',
+            detail=f'is_active set to {donor.user.is_active}'
+        )
+        Notification.objects.create(
+            user=donor.user,
+            title=f'Account {action}',
+            message=f'Your account has been {action.lower()} by an administrator.',
+            notif_type='success' if donor.user.is_active else 'warning'
+        )
+        messages.success(request, f'Account {action.lower()} successfully.')
+    except Donor.DoesNotExist:
+        messages.error(request, 'Donor not found.')
+    return redirect('admin_all_donors')
 
 
 # ============================================================
@@ -428,10 +522,10 @@ def profile(request):
 
     if request.method == 'POST':
         full_name  = request.POST.get('full_name', '').strip()
-        name_parts = full_name.split(' ', 1)
-        user.first_name = name_parts[0]
-        user.last_name  = name_parts[1] if len(name_parts) > 1 else ''
-        user.email = request.POST.get('email')
+        parts      = full_name.split(' ', 1)
+        user.first_name = parts[0]
+        user.last_name  = parts[1] if len(parts) > 1 else ''
+        user.email = request.POST.get('email', '').strip().lower()
         user.save()
 
         if donor:
@@ -439,9 +533,62 @@ def profile(request):
             donor.city    = request.POST.get('city')
             donor.pincode = request.POST.get('pincode')
             donor.state   = request.POST.get('state')
+            donor.nation  = request.POST.get('nation')
             donor.save()
 
         messages.success(request, 'Profile updated successfully!')
         return redirect('profile')
 
     return render(request, 'profile.html', {'donor': donor})
+
+
+# ============================================================
+# CONTACT ADMIN — deactivated user sends a message
+# ============================================================
+def contact_admin(request):
+    if request.method == 'POST':
+        name    = request.POST.get('name', '').strip()
+        phone   = request.POST.get('phone', '').strip()
+        message = request.POST.get('message', '').strip()
+
+        if not name or not phone or not message:
+            return render(request, 'contact_admin.html', {
+                'error': 'All fields are required.',
+                'form_data': request.POST,
+            })
+
+        ContactAdminMessage.objects.create(name=name, phone=phone, message=message)
+        return render(request, 'contact_admin.html', {'success': True})
+
+    name  = request.GET.get('name', '')
+    phone = request.GET.get('phone', '')
+    return render(request, 'contact_admin.html', {'prefill_name': name, 'prefill_phone': phone})
+
+
+# ============================================================
+# ADMIN — view all contact messages
+# ============================================================
+@login_required
+def admin_contact_messages(request):
+    if not request.user.is_staff:
+        return redirect('dashboard')
+
+    if request.method == 'POST':
+        msg_id = request.POST.get('msg_id')
+        action = request.POST.get('action')
+        try:
+            msg = ContactAdminMessage.objects.get(id=msg_id)
+            if action == 'read':
+                msg.is_read = True
+                msg.save()
+            elif action == 'delete':
+                msg.delete()
+        except ContactAdminMessage.DoesNotExist:
+            pass
+        return redirect('admin_contact_messages')
+
+    msgs = ContactAdminMessage.objects.all()
+    return render(request, 'admin_contact_messages.html', {
+        'messages_list': msgs,
+        'unread_count': msgs.filter(is_read=False).count(),
+    })

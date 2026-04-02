@@ -2,70 +2,122 @@
 {% block title %}Admin Dashboard | Blood Bank Management{% endblock %}
 
 {% block content %}
-<div class="row mb-5 align-items-center border-bottom pb-4 mt-3">
-    <div class="col-md-8">
-        <h2 class="text-dark fw-bold mb-1" style="font-size: 2.5rem;">
-            System <span style="color: var(--primary);">Administration</span>
-        </h2>
-        <p class="text-muted fs-5 mb-0 d-flex align-items-center">
-            <i class="bi bi-shield-lock-fill me-2" style="color: var(--primary);"></i> Admin Dashboard
-        </p>
-    </div>
+<div class="row mb-4 align-items-center border-bottom pb-4 mt-3">
+  <div class="col-md-8">
+    <h2 class="text-dark fw-bold mb-1" style="font-size:2.5rem;">
+      System <span style="color:var(--primary);">Administration</span>
+    </h2>
+    <p class="text-muted fs-5 mb-0">
+      <i class="bi bi-shield-lock-fill me-2" style="color:var(--primary);"></i> Admin Dashboard
+    </p>
+  </div>
 </div>
 
+<!-- ── Live Stats ─────────────────────────────────────── -->
+<div class="row g-3 mb-5">
+  <div class="col-6 col-md-4 col-lg-2">
+    <div class="premium-card text-center p-3 h-100" style="border-top:3px solid var(--primary);">
+      <div class="fw-800 text-danger" style="font-size:2rem;font-weight:800;">{{ stats.total_donors }}</div>
+      <div class="text-muted small fw-semibold">Total Donors</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4 col-lg-2">
+    <div class="premium-card text-center p-3 h-100" style="border-top:3px solid #3b82f6;">
+      <div style="font-size:2rem;font-weight:800;color:#3b82f6;">{{ stats.total_requests }}</div>
+      <div class="text-muted small fw-semibold">Total Requests</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4 col-lg-2">
+    <div class="premium-card text-center p-3 h-100" style="border-top:3px solid #f59e0b;">
+      <div style="font-size:2rem;font-weight:800;color:#f59e0b;">{{ stats.pending_requests }}</div>
+      <div class="text-muted small fw-semibold">Pending Requests</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4 col-lg-2">
+    <div class="premium-card text-center p-3 h-100" style="border-top:3px solid #8b5cf6;">
+      <div style="font-size:2rem;font-weight:800;color:#8b5cf6;">{{ stats.pending_health }}</div>
+      <div class="text-muted small fw-semibold">Health Pending</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4 col-lg-2">
+    <div class="premium-card text-center p-3 h-100" style="border-top:3px solid #16a34a;">
+      <div style="font-size:2rem;font-weight:800;color:#16a34a;">{{ stats.total_donations }}</div>
+      <div class="text-muted small fw-semibold">Total Donations</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4 col-lg-2">
+    <div class="premium-card text-center p-3 h-100" style="border-top:3px solid {% if stats.low_stock > 0 %}#dc2626{% else %}#64748b{% endif %};">
+      <div style="font-size:2rem;font-weight:800;color:{% if stats.low_stock > 0 %}#dc2626{% else %}#64748b{% endif %};">{{ stats.low_stock }}</div>
+      <div class="text-muted small fw-semibold">Low Stock Groups</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4 col-lg-2">
+    <a href="{% url 'admin_contact_messages' %}" class="text-decoration-none">
+      <div class="premium-card text-center p-3 h-100" style="border-top:3px solid {% if stats.unread_messages > 0 %}#f59e0b{% else %}#64748b{% endif %};">
+        <div style="font-size:2rem;font-weight:800;color:{% if stats.unread_messages > 0 %}#f59e0b{% else %}#64748b{% endif %};">{{ stats.unread_messages }}</div>
+        <div class="text-muted small fw-semibold">User Messages</div>
+      </div>
+    </a>
+  </div>
+</div>
+
+<!-- ── Quick Actions ──────────────────────────────────── -->
 <div class="row justify-content-center g-4 mb-5">
-    
-    <div class="col-md-4">
-        <a href="/admin/" class="dash-card h-100">
-            <div class="icon-wrapper bg-white border border-light shadow-sm">
-                <i class="bi bi-gear-fill"></i>
-            </div>
-            <h4>Django Admin Panel</h4>
-            <p>Manage core database models, users, and system configurations securely.</p>
-        </a>
-    </div>
-
-    <div class="col-md-4">
-        <a href="/inventory/blood-stock/" class="dash-card h-100">
-            <div class="icon-wrapper bg-white border border-light shadow-sm">
-                <i class="bi bi-moisture"></i>
-            </div>
-            <h4>Manage Blood Stock</h4>
-            <p>View complete inventory, add new blood groups, and reliably update units.</p>
-        </a>
-    </div>
-
-    <div class="col-md-4">
-        <a href="/requests/admin-requests/" class="dash-card h-100">
-            <div class="icon-wrapper bg-white border border-light shadow-sm">
-                <i class="bi bi-clipboard2-check-fill"></i>
-            </div>
-            <h4>Approve Requests</h4>
-            <p>Swiftly review, approve, or reject incoming life-saving blood requests.</p>
-        </a>
-    </div>
-
-    <!-- NEW HEALTH APPROVALS CARD -->
-    <div class="col-md-4">
-        <a href="{% url 'admin_health_approvals' %}" class="dash-card h-100">
-            <div class="icon-wrapper bg-white border border-light shadow-sm">
-                <i class="bi bi-heart-pulse-fill"></i>
-            </div>
-            <h4>Health Approvals</h4>
-            <p>Review and approve donor health conditions before allowing donations.</p>
-        </a>
-    </div>
-
-    <!-- ALL DONORS CARD -->
-    <div class="col-md-4">
-        <a href="{% url 'admin_all_donors' %}" class="dash-card h-100">
-            <div class="icon-wrapper bg-white border border-light shadow-sm">
-                <i class="bi bi-people-fill"></i>
-            </div>
-            <h4>All Donors</h4>
-            <p>View the complete database of registered donors, their details, and statuses.</p>
-        </a>
-    </div>
-
+  <div class="col-md-4">
+    <a href="/admin/" class="dash-card h-100">
+      <div class="icon-wrapper bg-white border border-light shadow-sm"><i class="bi bi-gear-fill"></i></div>
+      <h4>Django Admin Panel</h4>
+      <p>Manage core database models, users, and system configurations.</p>
+    </a>
+  </div>
+  <div class="col-md-4">
+    <a href="{% url 'blood_stock' %}" class="dash-card h-100">
+      <div class="icon-wrapper bg-white border border-light shadow-sm"><i class="bi bi-moisture"></i></div>
+      <h4>Manage Blood Stock</h4>
+      <p>View inventory, add blood groups, and update units.</p>
+    </a>
+  </div>
+  <div class="col-md-4">
+    <a href="{% url 'admin_requests' %}" class="dash-card h-100">
+      <div class="icon-wrapper bg-white border border-light shadow-sm"><i class="bi bi-clipboard2-check-fill"></i></div>
+      <h4>Approve Requests</h4>
+      <p>Review, approve, or reject incoming blood requests.</p>
+    </a>
+  </div>
+  <div class="col-md-4">
+    <a href="{% url 'admin_health_approvals' %}" class="dash-card h-100">
+      <div class="icon-wrapper bg-white border border-light shadow-sm"><i class="bi bi-heart-pulse-fill"></i></div>
+      <h4>Health Approvals</h4>
+      <p>Review donor health conditions and uploaded documents.</p>
+    </a>
+  </div>
+  <div class="col-md-4">
+    <a href="{% url 'admin_all_donors' %}" class="dash-card h-100">
+      <div class="icon-wrapper bg-white border border-light shadow-sm"><i class="bi bi-people-fill"></i></div>
+      <h4>All Donors</h4>
+      <p>View, search, and manage all registered donors.</p>
+    </a>
+  </div>
+  <div class="col-md-4">
+    <a href="{% url 'audit_log' %}" class="dash-card h-100">
+      <div class="icon-wrapper bg-white border border-light shadow-sm"><i class="bi bi-journal-text"></i></div>
+      <h4>Audit Log</h4>
+      <p>Track all admin actions — approvals, rejections, and account changes.</p>
+    </a>
+  </div>
+  <div class="col-md-4">
+    <a href="{% url 'admin_contact_messages' %}" class="dash-card h-100">
+      <div class="icon-wrapper bg-white border border-light shadow-sm" style="position:relative;">
+        <i class="bi bi-envelope-fill"></i>
+        {% if stats.unread_messages > 0 %}
+          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.65rem;">
+            {{ stats.unread_messages }}
+          </span>
+        {% endif %}
+      </div>
+      <h4>User Messages {% if stats.unread_messages > 0 %}<span class="badge bg-danger ms-1" style="font-size:0.7rem;">{{ stats.unread_messages }}</span>{% endif %}</h4>
+      <p>Messages from deactivated users requesting account reactivation.</p>
+    </a>
+  </div>
 </div>
 {% endblock %}

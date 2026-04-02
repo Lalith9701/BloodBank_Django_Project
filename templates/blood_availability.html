@@ -10,8 +10,10 @@
 <div class="row g-4 justify-content-center mb-5">
     {% for stock in stocks %}
     <div class="col-md-3">
-        <div class="premium-card text-center p-4 h-100 border-top border-4 shadow-hover" 
-             style="border-top-color: {% if stock.units_available < 5 %}#dc3545{% elif stock.units_available < 20 %}#ffc107{% else %}#198754{% endif %} !important;">
+        <div class="premium-card text-center p-4 h-100 shadow-hover
+            {% if stock.units_available < 5 %}border-top border-4 border-danger
+            {% elif stock.units_available < 20 %}border-top border-4 border-warning
+            {% else %}border-top border-4 border-success{% endif %}">
             <div class="display-1 fw-bold mb-2" style="color: var(--primary);">{{ stock.blood_group.blood_group }}</div>
             <div class="h3 fw-bold mb-3 text-dark">{{ stock.units_available }} <span class="fs-6 text-muted text-uppercase">Units</span></div>
             

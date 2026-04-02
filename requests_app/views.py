@@ -8,6 +8,7 @@ import csv
 from inventory.models import BloodGroup
 from donors.models import Donor
 from notifications.models import Notification
+from accounts.models import AuditLog
 from .models import Donation, BloodRequest
 
 
@@ -168,6 +169,12 @@ def admin_requests(request):
                 ),
                 notif_type="success"
             )
+            AuditLog.objects.create(
+                actor=request.user,
+                action='Blood Request Approved',
+                target=f'Request by: {blood_request.user.get_full_name() or blood_request.user.username}',
+                detail=f'{blood_request.units_required} units of {blood_request.blood_group}'
+            )
 
         elif action == 'reject':
             reason = request.POST.get('rejection_reason', '')
@@ -182,6 +189,12 @@ def admin_requests(request):
                     f"{blood_request.blood_group} was rejected. Reason: {reason}"
                 ),
                 notif_type="danger"
+            )
+            AuditLog.objects.create(
+                actor=request.user,
+                action='Blood Request Rejected',
+                target=f'Request by: {blood_request.user.get_full_name() or blood_request.user.username}',
+                detail=f'{blood_request.units_required} units of {blood_request.blood_group}. Reason: {reason}'
             )
 
         return redirect('admin_requests')
@@ -213,3 +226,28 @@ def export_requests_csv(request):
             req.request_date.strftime("%Y-%m-%d %H:%M")
         ])
     return response
+
+
+# ===================================
+# TOGGLE DONOR AVAILABILITY
+# ===================================
+@login_required
+def toggle_availability(request):
+    if request.user.role != 'DONOR':
+        return redirect('dashboard')
+    if request.method == 'POST':
+        try:
+            donor = Donor.objects.get(user=request.user)
+            donor.availability = not donor.availability
+            donor.save()
+            status = 'Available' if donor.availability else 'Unavailable'
+            messages.success(request, f'Your availability has been set to {status}.')
+            Notification.objects.create(
+                user=request.user,
+                title=f'Availability Updated',
+                message=f'You have set your donor availability to {status}.',
+                notif_type='success' if donor.availability else 'info'
+            )
+        except Donor.DoesNotExist:
+            messages.error(request, 'Donor profile not found.')
+    return redirect('dashboard')

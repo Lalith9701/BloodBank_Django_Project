@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% block title %}Deactivated User Messages | Admin{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center border-bottom pb-3 mt-3">
+  <div class="col">
+    <h2 class="fw-bold mb-1" style="font-size:2rem;">
+      <i class="bi bi-envelope-fill me-2" style="color:var(--primary);"></i>
+      Deactivated User Messages
+    </h2>
+    <p class="text-muted mb-0 small">Messages sent by deactivated users requesting account reactivation.</p>
+  </div>
+  <div class="col-auto">
+    {% if unread_count %}
+      <span class="badge bg-danger fs-6 px-3 py-2">{{ unread_count }} Unread</span>
+    {% else %}
+      <span class="badge bg-secondary fs-6 px-3 py-2">All Read</span>
+    {% endif %}
+  </div>
+</div>
+
+{% if messages_list %}
+  <div class="row g-3">
+    {% for msg in messages_list %}
+    <div class="col-12">
+      <div class="premium-card p-4 {% if not msg.is_read %}border-start border-4 border-danger{% else %}border-start border-4 border-secondary{% endif %}">
+        <div class="d-flex align-items-start justify-content-between flex-wrap gap-2">
+
+          <div class="d-flex align-items-center gap-3">
+            <div class="icon-circle flex-shrink-0"
+                 style="width:46px;height:46px;border-radius:50%;
+                        background:{% if not msg.is_read %}var(--primary-light){% else %}#f1f5f9{% endif %};
+                        color:{% if not msg.is_read %}var(--primary){% else %}#94a3b8{% endif %};
+                        display:flex;align-items:center;justify-content:center;font-size:1.3rem;">
+              <i class="bi bi-person-fill"></i>
+            </div>
+            <div>
+              <div class="fw-bold" style="color:var(--secondary);">
+                {{ msg.name }}
+                {% if not msg.is_read %}
+                  <span class="badge bg-danger ms-2" style="font-size:0.7rem;">New</span>
+                {% endif %}
+              </div>
+              <div class="text-muted small">
+                <i class="bi bi-telephone me-1"></i>{{ msg.phone }}
+                &nbsp;·&nbsp;
+                <i class="bi bi-clock me-1"></i>{{ msg.sent_at|date:"d M Y, h:i A" }}
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex gap-2 flex-wrap">
+            {% if not msg.is_read %}
+            <form method="post" class="d-inline">
+              {% csrf_token %}
+              <input type="hidden" name="msg_id" value="{{ msg.id }}">
+              <input type="hidden" name="action" value="read">
+              <button type="submit" class="btn btn-sm btn-outline-success fw-semibold px-3"
+                      style="border-radius:6px;">
+                <i class="bi bi-check2 me-1"></i>Mark Read
+              </button>
+            </form>
+            {% endif %}
+
+            <a href="{% url 'admin_all_donors' %}?q={{ msg.phone }}"
+               class="btn btn-sm btn-outline-primary fw-semibold px-3"
+               style="border-radius:6px;" title="Search this user in donors">
+              <i class="bi bi-search me-1"></i>Find User
+            </a>
+
+            <form method="post" class="d-inline"
+                  onsubmit="return confirm('Delete this message?')">
+              {% csrf_token %}
+              <input type="hidden" name="msg_id" value="{{ msg.id }}">
+              <input type="hidden" name="action" value="delete">
+              <button type="submit" class="btn btn-sm btn-outline-danger fw-semibold px-3"
+                      style="border-radius:6px;">
+                <i class="bi bi-trash3 me-1"></i>Delete
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <div class="mt-3 p-3 rounded" style="background:#f8fafc;border:1px solid var(--border-color);">
+          <p class="mb-0 text-muted" style="white-space:pre-wrap;font-size:0.93rem;">{{ msg.message }}</p>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+{% else %}
+  <div class="text-center py-5">
+    <div style="font-size:3.5rem;color:#cbd5e1;"><i class="bi bi-envelope-open"></i></div>
+    <h5 class="text-muted mt-3 fw-semibold">No messages yet</h5>
+    <p class="text-muted small">When a deactivated user contacts the admin, their message will appear here.</p>
+  </div>
+{% endif %}
+
+<div class="mt-4">
+  <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary px-4" style="border-radius:8px;">
+    <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+  </a>
+</div>
+{% endblock %}

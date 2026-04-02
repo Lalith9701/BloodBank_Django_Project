@@ -33,7 +33,7 @@
                         </div>
                     </div>
                 {% endif %}
-                <form method="post">
+                <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
 
                     <!-- ROW 1: Name -->
@@ -218,6 +218,56 @@
                             <div class="form-text small mt-1 text-muted">This information is strictly confidential and
                                 is required for donor eligibility assessment.</div>
                         </div>
+
+                        <!-- Health Document Upload -->
+                        <div class="col-12">
+                            <label for="health_document"
+                                class="form-label text-danger fw-bold small text-uppercase">
+                                <i class="bi bi-file-earmark-medical-fill me-1"></i>
+                                Upload Supporting Document <span class="text-muted fw-normal">(Optional)</span>
+                            </label>
+
+                            <!-- Custom file drop zone -->
+                            <div id="doc-drop-zone"
+                                style="border: 2px dashed #f8d7da; border-radius: 10px; padding: 28px 20px;
+                                       text-align: center; cursor: pointer; background: #fff5f5;
+                                       transition: border-color .2s, background .2s;">
+                                <i class="bi bi-cloud-arrow-up-fill text-danger" style="font-size: 2.2rem;"></i>
+                                <p class="mb-1 mt-2 fw-semibold text-danger" style="font-size: 0.9rem;">
+                                    Click to browse or drag &amp; drop your file here
+                                </p>
+                                <p class="text-muted mb-0" style="font-size: 0.78rem;">
+                                    Accepted: JPG, PNG, PDF &nbsp;·&nbsp; Max size: 5 MB
+                                </p>
+                                <input type="file" id="health_document" name="health_document"
+                                    accept=".jpg,.jpeg,.png,.pdf"
+                                    style="display:none;">
+                            </div>
+
+                            <!-- File preview -->
+                            <div id="doc-preview" class="mt-2" style="display:none;">
+                                <div class="d-flex align-items-center gap-2 p-2 border rounded bg-light shadow-sm">
+                                    <i id="doc-icon" class="bi bi-file-earmark fs-4 text-danger"></i>
+                                    <div class="flex-grow-1 overflow-hidden">
+                                        <div id="doc-name" class="fw-semibold small text-truncate"></div>
+                                        <div id="doc-size" class="text-muted" style="font-size:0.75rem;"></div>
+                                    </div>
+                                    <button type="button" id="doc-remove"
+                                        class="btn btn-sm btn-outline-danger rounded-pill px-2 py-0">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            {% if field_errors.health_document %}
+                                <div class="text-danger small mt-1">
+                                    <i class="bi bi-exclamation-circle-fill me-1"></i>{{ field_errors.health_document }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text small mt-1 text-muted">
+                                Upload a medical certificate, prescription, lab report, or any document that supports your health condition.
+                            </div>
+                        </div>
                     </div>
 
                     <h5 class="fw-bold text-dark mt-5 mb-3 border-bottom pb-2" style="font-size: 1.1rem;">
@@ -280,25 +330,20 @@
                     <!-- ROW 6: Pincode & City -->
                     <div class="row g-4 mb-4">
                         <div class="col-md-6">
-                            <label for="pincode"
-                                class="form-label text-muted fw-bold small text-uppercase">Pincode</label>
+                            <label for="pincode" class="form-label text-muted fw-bold small text-uppercase">Pincode</label>
                             <div class="input-group shadow-sm" style="border-radius: 8px; overflow: hidden;">
-                                <span class="input-group-text border-0 bg-light text-muted"><i
-                                        class="bi bi-pin-map"></i></span>
+                                <span class="input-group-text border-0 bg-light text-muted"><i class="bi bi-pin-map"></i></span>
                                 <input type="text" class="form-control border-0 ps-2 bg-light" id="pincode"
-                                    name="pincode" placeholder="e.g., 400001" maxlength="6" required>
+                                    name="pincode" placeholder="e.g., 400001" maxlength="6" required autocomplete="off">
                             </div>
-                            <small id="pincode-status" class="text-primary mt-1 d-block"
-                                style="font-size: 0.8rem; display: none;"></small>
+                            <small id="pincode-status" class="mt-1 d-none"></small>
                         </div>
                         <div class="col-md-6">
-                            <label for="city" class="form-label text-muted fw-bold small text-uppercase">City /
-                                District</label>
+                            <label for="city" class="form-label text-muted fw-bold small text-uppercase">City / District</label>
                             <div class="input-group shadow-sm" style="border-radius: 8px; overflow: hidden;">
-                                <span class="input-group-text border-0 bg-light text-muted"><i
-                                        class="bi bi-building"></i></span>
+                                <span class="input-group-text border-0 bg-light text-muted"><i class="bi bi-building"></i></span>
                                 <input type="text" class="form-control border-0 ps-2 bg-light" id="city" name="city"
-                                    placeholder="Auto-filled city" readonly required>
+                                    placeholder="Auto-filled from pincode" readonly required>
                             </div>
                         </div>
                     </div>
@@ -308,20 +353,17 @@
                         <div class="col-md-6">
                             <label for="state" class="form-label text-muted fw-bold small text-uppercase">State</label>
                             <div class="input-group shadow-sm" style="border-radius: 8px; overflow: hidden;">
-                                <span class="input-group-text border-0 bg-light text-muted"><i
-                                        class="bi bi-map"></i></span>
+                                <span class="input-group-text border-0 bg-light text-muted"><i class="bi bi-map"></i></span>
                                 <input type="text" class="form-control border-0 ps-2 bg-light" id="state" name="state"
-                                    placeholder="Auto-filled state" readonly required>
+                                    placeholder="Auto-filled from pincode" readonly required>
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <label for="nation"
-                                class="form-label text-muted fw-bold small text-uppercase">Nation</label>
+                            <label for="nation" class="form-label text-muted fw-bold small text-uppercase">Nation</label>
                             <div class="input-group shadow-sm" style="border-radius: 8px; overflow: hidden;">
-                                <span class="input-group-text border-0 bg-light text-muted"><i
-                                        class="bi bi-globe"></i></span>
+                                <span class="input-group-text border-0 bg-light text-muted"><i class="bi bi-globe"></i></span>
                                 <input type="text" class="form-control border-0 ps-2 bg-light" id="nation" name="nation"
-                                    placeholder="Auto-filled nation" readonly required>
+                                    placeholder="Auto-filled from pincode" readonly required>
                             </div>
                         </div>
                     </div>
@@ -360,10 +402,81 @@
             descContainer.style.display = 'none';
             descTextarea.removeAttribute('required');
             descTextarea.value = '';
+            clearDocUpload();
         }
     });
 
-    // ── Password strength & live checklist ──────────────────
+    // Health Document Upload
+    const dropZone   = document.getElementById('doc-drop-zone');
+    const fileInput  = document.getElementById('health_document');
+    const preview    = document.getElementById('doc-preview');
+    const docName    = document.getElementById('doc-name');
+    const docSize    = document.getElementById('doc-size');
+    const docIcon    = document.getElementById('doc-icon');
+    const docRemove  = document.getElementById('doc-remove');
+
+    function formatBytes(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+    }
+
+    function showFilePreview(file) {
+        docName.textContent = file.name;
+        docSize.textContent = formatBytes(file.size);
+        docIcon.className = file.type === 'application/pdf'
+            ? 'bi bi-file-earmark-pdf-fill fs-4 text-danger'
+            : 'bi bi-file-earmark-image-fill fs-4 text-primary';
+        preview.style.display = 'block';
+        dropZone.style.borderColor = '#16a34a';
+        dropZone.style.background  = '#f0fdf4';
+    }
+
+    function clearDocUpload() {
+        if (fileInput) fileInput.value = '';
+        if (preview)   preview.style.display = 'none';
+        if (dropZone) {
+            dropZone.style.borderColor = '#f8d7da';
+            dropZone.style.background  = '#fff5f5';
+        }
+    }
+
+    if (dropZone) {
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = '#dc2626';
+            dropZone.style.background  = '#fee2e2';
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.style.borderColor = '#f8d7da';
+            dropZone.style.background  = '#fff5f5';
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                const dt = new DataTransfer();
+                dt.items.add(file);
+                fileInput.files = dt.files;
+                showFilePreview(file);
+            }
+        });
+
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files[0]) showFilePreview(fileInput.files[0]);
+        });
+
+        docRemove.addEventListener('click', (e) => {
+            e.stopPropagation();
+            clearDocUpload();
+        });
+    }
+
+    // Password strength & live checklist
     const pwInput   = document.getElementById('password');
     const confirmEl = document.getElementById('confirm_password');
     const confirmMsg= document.getElementById('confirm-msg');
@@ -435,54 +548,106 @@
             confirmEl.focus();
         }
     });
-    // ── Pincode Auto-fill Logic ──────────────────────────────
+
+    // ── Pincode Auto-fill ────────────────────────────────────
+    const pincodeInput  = document.getElementById('pincode');
+    const pincodeStatus = document.getElementById('pincode-status');
     let pincodeTimer = null;
 
-    function setStatus(cls, html) {
-        const s = document.getElementById('pincode-status');
-        s.style.display = 'block';
-        s.className = cls + ' mt-1 d-block';
-        s.innerHTML = html;
+    function setStatus(type, html) {
+        pincodeStatus.className = 'mt-1 d-block small fw-semibold ' + type;
+        pincodeStatus.innerHTML = html;
     }
 
     function clearLocation() {
-        ['city','state','nation'].forEach(id => document.getElementById(id).value = '');
+        ['city', 'state', 'nation'].forEach(id => {
+            const el = document.getElementById(id);
+            el.value = '';
+            el.setAttribute('readonly', 'readonly');
+            el.placeholder = 'Auto-filled from pincode';
+        });
     }
 
     function fillLocation(city, state, country) {
-        document.getElementById('city').value   = city;
-        document.getElementById('state').value  = state;
-        document.getElementById('nation').value = country;
+        document.getElementById('city').value   = city    || '';
+        document.getElementById('state').value  = state   || '';
+        document.getElementById('nation').value = country || 'India';
     }
 
-    // Primary: postalpincode.in
+    function unlockManual() {
+        ['city', 'state', 'nation'].forEach(id => {
+            const el = document.getElementById(id);
+            el.removeAttribute('readonly');
+            el.placeholder = 'Enter manually';
+        });
+    }
+
+    // Pick the best city name from a PostOffice object.
+    // Priority: Taluk > Division > District > Block > Name (post office name)
+    function bestCity(po) {
+        const candidates = [po.Taluk, po.Division, po.District, po.Block, po.Name];
+        for (const c of candidates) {
+            if (c && c.trim() && c.trim().toUpperCase() !== 'NA') return c.trim();
+        }
+        return po.Name || '';
+    }
+
+    // Primary: postalpincode.in — scans ALL post offices for the best city name
     function fetchPostalPincode(pin) {
-        return fetch(`https://api.postalpincode.in/pincode/${pin}`, { signal: AbortSignal.timeout(5000) })
-            .then(r => r.json())
-            .then(data => {
-                if (data && data[0] && data[0].Status === 'Success' && data[0].PostOffice.length) {
-                    const d = data[0].PostOffice[0];
-                    let city = d.District !== 'NA' ? d.District : d.Name;
-                    fillLocation(city, d.State, d.Country);
-                    return true;
-                }
-                return false;
-            });
-    }
-
-    // Fallback: India Post open data via Nominatim (OpenStreetMap)
-    function fetchNominatim(pin) {
-        const url = `https://nominatim.openstreetmap.org/search?postalcode=${pin}&country=India&format=json&addressdetails=1&limit=1`;
-        return fetch(url, {
-            headers: { 'Accept-Language': 'en' },
-            signal: AbortSignal.timeout(6000)
+        return fetch('https://api.postalpincode.in/pincode/' + pin, {
+            signal: AbortSignal.timeout(7000)
         })
         .then(r => r.json())
         .then(data => {
-            if (data && data.length > 0) {
-                const a = data[0].address;
-                const city  = a.city || a.town || a.village || a.county || a.state_district || '';
-                const state = a.state || '';
+            if (!data || !data[0] || data[0].Status !== 'Success') return false;
+            const offices = data[0].PostOffice;
+            if (!offices || offices.length === 0) return false;
+
+            // Try to find a non-NA District first across all offices
+            let city = '';
+            for (const po of offices) {
+                if (po.District && po.District.trim().toUpperCase() !== 'NA') {
+                    city = po.District.trim();
+                    break;
+                }
+            }
+            // If no district found, use bestCity() on the first office
+            if (!city) city = bestCity(offices[0]);
+
+            const state   = offices[0].State   || '';
+            const country = offices[0].Country || 'India';
+            fillLocation(city, state, country);
+            return true;
+        })
+        .catch(() => false);
+    }
+
+    // Fallback: Nominatim (OpenStreetMap) — covers villages, hamlets, suburbs
+    function fetchNominatim(pin) {
+        const url = 'https://nominatim.openstreetmap.org/search'
+                  + '?postalcode=' + pin
+                  + '&country=India&format=json&addressdetails=1&limit=3';
+        return fetch(url, {
+            headers: { 'Accept-Language': 'en' },
+            signal: AbortSignal.timeout(8000)
+        })
+        .then(r => r.json())
+        .then(results => {
+            if (!results || results.length === 0) return false;
+            // Try each result until we get a usable city
+            for (const result of results) {
+                const a = result.address || {};
+                // Ordered from most specific to least specific
+                const city = a.city
+                          || a.town
+                          || a.municipality
+                          || a.village
+                          || a.hamlet
+                          || a.suburb
+                          || a.county
+                          || a.state_district
+                          || '';
+                const state   = a.state   || '';
                 const country = a.country || 'India';
                 if (city || state) {
                     fillLocation(city, state, country);
@@ -490,50 +655,39 @@
                 }
             }
             return false;
-        });
+        })
+        .catch(() => false);
     }
 
-    document.getElementById('pincode').addEventListener('input', function () {
+    pincodeInput.addEventListener('input', function () {
         const pin = this.value.trim();
         clearTimeout(pincodeTimer);
+        pincodeStatus.className = 'mt-1 d-none';
 
         if (!/^\d{6}$/.test(pin)) {
-            document.getElementById('pincode-status').style.display = 'none';
             clearLocation();
             return;
         }
 
-        setStatus('text-primary', '<span class="spinner-border spinner-border-sm me-1"></span> Fetching location...');
+        setStatus('text-primary',
+            '<span class="spinner-border spinner-border-sm me-1" style="width:.8rem;height:.8rem;"></span> Fetching location…');
 
-        // Debounce 400ms so we don't fire on every keystroke
-        pincodeTimer = setTimeout(() => {
+        pincodeTimer = setTimeout(function () {
             fetchPostalPincode(pin)
-                .then(ok => ok ? ok : fetchNominatim(pin))
+                .then(ok => ok ? true : fetchNominatim(pin))
                 .then(ok => {
                     if (ok) {
-                        setStatus('text-success', '<i class="bi bi-check-circle-fill me-1"></i> Location auto-filled!');
-                        setTimeout(() => document.getElementById('pincode-status').style.display = 'none', 3000);
+                        setStatus('text-success',
+                            '<i class="bi bi-check-circle-fill me-1"></i>Location auto-filled!');
+                        setTimeout(() => { pincodeStatus.className = 'mt-1 d-none'; }, 3000);
                     } else {
                         clearLocation();
-                        setStatus('text-danger', '<i class="bi bi-exclamation-circle-fill me-1"></i> Pincode not found. Please fill manually.');
-                        // Unlock readonly fields so user can type manually
-                        ['city','state','nation'].forEach(id => {
-                            const el = document.getElementById(id);
-                            el.removeAttribute('readonly');
-                            el.placeholder = 'Enter manually';
-                        });
+                        unlockManual();
+                        setStatus('text-danger',
+                            '<i class="bi bi-exclamation-circle-fill me-1"></i>Pincode not found — please fill manually.');
                     }
-                })
-                .catch(() => {
-                    clearLocation();
-                    setStatus('text-danger', '<i class="bi bi-exclamation-circle-fill me-1"></i> Could not fetch. Please fill manually.');
-                    ['city','state','nation'].forEach(id => {
-                        const el = document.getElementById(id);
-                        el.removeAttribute('readonly');
-                        el.placeholder = 'Enter manually';
-                    });
                 });
-        }, 400);
+        }, 500);
     });
 </script>
 {% endblock %}

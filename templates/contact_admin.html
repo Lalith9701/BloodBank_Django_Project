@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% block title %}Contact Administrator | Blood Bank{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-5">
+  <div class="col-12 col-sm-9 col-md-7 col-lg-5">
+    <div class="premium-card">
+
+      <div class="premium-card-header flex-column text-center pb-2 border-0" style="background:transparent;">
+        <div class="icon-circle mb-3 shadow-sm"
+             style="width:70px;height:70px;border-radius:50%;background-color:var(--primary-light);
+                    color:var(--primary);display:flex;align-items:center;justify-content:center;
+                    font-size:2rem;margin:0 auto;">
+          <i class="bi bi-envelope-fill"></i>
+        </div>
+        <h4 class="fw-bold mb-0" style="color:var(--secondary);">Contact Administrator</h4>
+        <p class="text-muted small mt-1">Your account has been deactivated. Send a message to request reactivation.</p>
+      </div>
+
+      <div class="card-body p-4 p-sm-5 pt-2">
+
+        {% if success %}
+          <div class="text-center py-4">
+            <div class="mb-3" style="font-size:3rem;color:#16a34a;"><i class="bi bi-check-circle-fill"></i></div>
+            <h5 class="fw-bold text-success mb-2">Message Sent!</h5>
+            <p class="text-muted small mb-4">The administrator will review your request and reactivate your account if approved.</p>
+            <a href="{% url 'login' %}" class="btn btn-primary-custom px-4">
+              <i class="bi bi-arrow-left me-2"></i>Back to Login
+            </a>
+          </div>
+
+        {% else %}
+
+          {% if error %}
+            <div class="alert alert-danger border-0 py-2 small d-flex align-items-center mb-3">
+              <i class="bi bi-exclamation-circle-fill me-2"></i>{{ error }}
+            </div>
+          {% endif %}
+
+          <form method="post">
+            {% csrf_token %}
+
+            <div class="mb-3">
+              <label class="form-label text-muted fw-semibold small text-uppercase">Your Name</label>
+              <div class="input-group shadow-sm" style="border-radius:8px;overflow:hidden;">
+                <span class="input-group-text border-0 bg-light"><i class="bi bi-person-fill text-muted"></i></span>
+                <input type="text" name="name" class="form-control border-0 bg-light"
+                       value="{{ form_data.name|default:prefill_name }}"
+                       placeholder="Full name" required>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label text-muted fw-semibold small text-uppercase">Phone Number</label>
+              <div class="input-group shadow-sm" style="border-radius:8px;overflow:hidden;">
+                <span class="input-group-text border-0 bg-light"><i class="bi bi-telephone-fill text-muted"></i></span>
+                <input type="tel" name="phone" class="form-control border-0 bg-light"
+                       value="{{ form_data.phone|default:prefill_phone }}"
+                       placeholder="Registered phone number" required>
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <label class="form-label text-muted fw-semibold small text-uppercase">Message to Administrator</label>
+              <textarea name="message" class="form-control border-0 bg-light shadow-sm" rows="4"
+                        style="border-radius:8px;"
+                        placeholder="Explain why you need your account reactivated…" required>{{ form_data.message|default:'' }}</textarea>
+            </div>
+
+            <div class="d-grid mb-3">
+              <button type="submit" class="btn btn-primary-custom btn-lg fw-semibold shadow-hover">
+                <i class="bi bi-send-fill me-2"></i>Send Message
+              </button>
+            </div>
+          </form>
+
+          <div class="text-center">
+            <a href="{% url 'login' %}" class="text-muted small text-decoration-none">
+              <i class="bi bi-arrow-left me-1"></i>Back to Login
+            </a>
+          </div>
+
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

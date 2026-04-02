@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block title %}Audit Log | Blood Bank{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 mt-3">
+  <h2 class="fw-bold mb-0" style="color:var(--secondary);font-size:2.2rem;">
+    <i class="bi bi-journal-text me-2" style="color:var(--primary);"></i>Admin Audit Log
+  </h2>
+  <a href="{% url 'dashboard' %}" class="btn btn-secondary-custom shadow-sm">
+    <i class="bi bi-arrow-left me-1"></i> Dashboard
+  </a>
+</div>
+
+<div class="premium-card mb-5 border-0">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-premium table-borderless align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Date &amp; Time</th>
+            <th>Admin</th>
+            <th>Action</th>
+            <th>Target</th>
+            <th>Detail</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in logs %}
+          <tr>
+            <td class="text-muted small fw-semibold" style="white-space:nowrap;">
+              <i class="bi bi-clock me-1"></i>{{ log.timestamp|date:"d M Y, H:i" }}
+            </td>
+            <td class="fw-semibold" style="color:var(--secondary);">
+              {{ log.actor.get_full_name|default:log.actor.username }}
+            </td>
+            <td>
+              {% if 'Approved' in log.action or 'Activated' in log.action %}
+                <span class="badge bg-success px-3 py-1 rounded-pill">{{ log.action }}</span>
+              {% elif 'Rejected' in log.action or 'Deactivated' in log.action %}
+                <span class="badge bg-danger px-3 py-1 rounded-pill">{{ log.action }}</span>
+              {% else %}
+                <span class="badge bg-secondary px-3 py-1 rounded-pill">{{ log.action }}</span>
+              {% endif %}
+            </td>
+            <td class="text-muted small">{{ log.target|default:"—" }}</td>
+            <td class="text-muted small">{{ log.detail|default:"—" }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="text-center text-muted py-5">
+              <i class="bi bi-journal-x fs-1 d-block mb-3" style="color:var(--primary-glare);"></i>
+              <h5 class="fw-bold mb-1">No audit records yet.</h5>
+              <p class="mb-0 small">Admin actions will be logged here automatically.</p>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

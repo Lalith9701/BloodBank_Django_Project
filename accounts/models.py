@@ -9,12 +9,27 @@ class User(AbstractUser):
         ('DONOR', 'Donor'),
         ('REQUESTER', 'Requester'),
     )
-    role  = models.CharField(max_length=20, choices=ROLE_CHOICES)
-    # Enforce unique email at DB level (case-insensitive via normalisation in view)
-    email = models.EmailField(unique=True, blank=True, default='')
+    role       = models.CharField(max_length=20, choices=ROLE_CHOICES)
+    email      = models.EmailField(unique=True, blank=True, default='')
+    is_active  = models.BooleanField(default=True)   # used for account deactivation
 
     def __str__(self):
         return self.username
+
+
+class AuditLog(models.Model):
+    """Tracks admin actions — who did what and when."""
+    actor      = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='audit_logs')
+    action     = models.CharField(max_length=100)
+    target     = models.CharField(max_length=200, blank=True)   # e.g. "Donor: John Doe"
+    detail     = models.TextField(blank=True)
+    timestamp  = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-timestamp']
+
+    def __str__(self):
+        return f"[{self.timestamp:%Y-%m-%d %H:%M}] {self.actor} — {self.action}"
 
 
 # Predefined security questions users can choose from
@@ -28,6 +43,21 @@ SECURITY_QUESTIONS = [
     ('q7', "What was the make of your first car?"),
     ('q8', "What was the name of your childhood best friend?"),
 ]
+
+
+class ContactAdminMessage(models.Model):
+    """Message sent by a deactivated user from the login page."""
+    name       = models.CharField(max_length=150)
+    phone      = models.CharField(max_length=20)
+    message    = models.TextField()
+    is_read    = models.BooleanField(default=False)
+    sent_at    = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-sent_at']
+
+    def __str__(self):
+        return f"[{'Read' if self.is_read else 'Unread'}] {self.name} ({self.phone})"
 
 
 class SecurityProfile(models.Model):
