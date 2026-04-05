@@ -5,9 +5,10 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.contrib import messages
 from django.http import HttpResponse
-from django.db import transaction
+from django.db import transaction, IntegrityError
 from django.db.models import Q
 from django.utils import timezone
+from django.views.decorators.csrf import requires_csrf_token
 import csv
 import logging
 import re
@@ -23,6 +24,23 @@ logger = logging.getLogger('accounts')
 
 SQ_MAX_ATTEMPTS = 3
 SQ_LOCKOUT_MINS = 15
+
+
+# ============================================================
+# CSRF FAILURE — friendly redirect instead of yellow 403 page
+# ============================================================
+@requires_csrf_token
+def csrf_failure(request, reason=''):
+    """
+    Redirect back to the referring page (or login) with a flash message
+    so the user gets a fresh CSRF token instead of seeing a 403 error.
+    """
+    messages.warning(
+        request,
+        'Your session expired or the page was open too long. Please try again.'
+    )
+    referer = request.META.get('HTTP_REFERER', '/')
+    return redirect(referer)
 
 
 def validate_strong_password(password: str) -> list[str]:
@@ -53,7 +71,25 @@ def login_view(request):
                 'error': 'Please enter your login ID and password.'
             })
 
+        # ── Helper: return deactivated response ───────────
+        def deactivated_response(raw_user):
+            return render(request, 'login.html', {
+                'error': 'Your account has been deactivated. Contact the administrator.',
+                'deactivated': True,
+                'deactivated_name': raw_user.get_full_name() or raw_user.username,
+                'deactivated_phone': raw_user.username,
+            })
+
         # ── Step 1: try phone number (username) directly ──
+        # Check deactivation BEFORE authenticate() so we show the right message
+        try:
+            raw_by_phone = User.objects.get(username=login_id)
+            if raw_by_phone.check_password(password):
+                if not raw_by_phone.is_active:
+                    return deactivated_response(raw_by_phone)
+        except User.DoesNotExist:
+            raw_by_phone = None
+
         user = authenticate(request, username=login_id, password=password)
 
         # ── Step 2: try full name lookup ──────────────────
@@ -70,29 +106,23 @@ def login_view(request):
             )
 
             for candidate in candidates:
-                result = authenticate(request, username=candidate.username, password=password)
-                if result:
-                    user = result
-                    break
+                if candidate.check_password(password):
+                    # Found the right user by full name — check deactivation first
+                    if not candidate.is_active:
+                        return deactivated_response(candidate)
+                    result = authenticate(request, username=candidate.username, password=password)
+                    if result:
+                        user = result
+                        break
 
         # ── Step 3: handle result ─────────────────────────
         if user:
+            # Final guard — never log in an inactive user
+            if not user.is_active:
+                return deactivated_response(user)
             login(request, user)
             next_url = request.POST.get('next') or request.GET.get('next')
             return redirect(next_url if next_url else 'dashboard')
-
-        # Check if account exists but is deactivated
-        try:
-            raw = User.objects.get(username=login_id)
-            if raw.check_password(password) and not raw.is_active:
-                return render(request, 'login.html', {
-                    'error': 'Your account has been deactivated. Contact the administrator.',
-                    'deactivated': True,
-                    'deactivated_name': raw.get_full_name() or raw.username,
-                    'deactivated_phone': raw.username,
-                })
-        except User.DoesNotExist:
-            pass
 
         return render(request, 'login.html', {
             'error': 'Invalid credentials. Use your phone number or full name.'
@@ -180,25 +210,40 @@ def register(request):
 
         eligibility = 'PENDING' if has_health_issue else 'ELIGIBLE'
 
-        with transaction.atomic():
-            user = User.objects.create_user(
-                username=phone, password=password,
-                first_name=first_name, last_name=last_name,
-                email=email, role='DONOR'
-            )
-            Donor.objects.create(
-                user=user, phone=phone, blood_group_id=blood_group_id,
-                age=age, gender=gender, weight=weight,
-                health_issue=has_health_issue,
-                health_issue_description=health_issue_desc,
-                health_document=health_document if has_health_issue else None,
-                eligibility_status=eligibility,
-                address=address, pincode=pincode,
-                city=city, state=state, nation=nation
-            )
-            sp = SecurityProfile(user=user, question_key=question_key)
-            sp.set_answer(sq_answer)
-            sp.save()
+        try:
+            with transaction.atomic():
+                user = User.objects.create_user(
+                    username=phone, password=password,
+                    first_name=first_name, last_name=last_name,
+                    email=email, role='DONOR'
+                )
+                Donor.objects.create(
+                    user=user, phone=phone, blood_group_id=blood_group_id,
+                    age=age, gender=gender, weight=weight,
+                    health_issue=has_health_issue,
+                    health_issue_description=health_issue_desc,
+                    health_document=health_document if has_health_issue else None,
+                    eligibility_status=eligibility,
+                    address=address, pincode=pincode,
+                    city=city, state=state, nation=nation
+                )
+                sp = SecurityProfile(user=user, question_key=question_key)
+                sp.set_answer(sq_answer)
+                sp.save()
+        except IntegrityError as e:
+            err_str = str(e).lower()
+            if 'email' in err_str:
+                field_errors['email'] = 'This email is already registered.'
+            elif 'phone' in err_str or 'username' in err_str:
+                field_errors['phone'] = 'This mobile number is already registered.'
+            else:
+                field_errors['__all__'] = 'Registration failed due to a conflict. Please check your details.'
+            return render(request, 'register.html', {
+                'blood_groups': blood_groups,
+                'security_questions': SECURITY_QUESTIONS,
+                'field_errors': field_errors,
+                'form_data': request.POST,
+            })
 
         logger.info(f"New donor registered: {phone}")
         messages.success(request, 'Registration successful! Please log in.')

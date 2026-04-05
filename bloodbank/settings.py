@@ -22,6 +22,14 @@ DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 # ============================================================
+# CSRF
+# ============================================================
+CSRF_COOKIE_SAMESITE  = 'Lax'
+CSRF_COOKIE_HTTPONLY  = False   # must be False so JS can read it if needed
+CSRF_COOKIE_AGE       = 60 * 60 * 24  # 24 hours — prevents stale token on long sessions
+CSRF_FAILURE_VIEW     = 'accounts.views.csrf_failure'
+
+# ============================================================
 # APPLICATIONS
 # ============================================================
 INSTALLED_APPS = [
@@ -53,6 +61,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'accounts.middleware.DeactivatedUserMiddleware',   # kicks out deactivated users instantly
 ]
 
 ROOT_URLCONF = 'bloodbank.urls'
