@@ -3,7 +3,7 @@
 
 {% block content %}
 <div class="row justify-content-center align-items-center py-4">
-    <div class="col-12 col-md-8 col-lg-6">
+    <div class="col-12 col-md-10 col-lg-8">
         <div class="premium-card">
             
             <div class="premium-card-header flex-column text-center pb-2 border-0" style="background: transparent;">
@@ -11,50 +11,104 @@
                     <i class="bi bi-hospital"></i>
                 </div>
                 <h3 class="fw-bold mb-0" style="color: var(--secondary);">Request Blood</h3>
-                <p class="text-muted small mt-2">Submit an official request for blood units.</p>
+                <p class="text-muted small mt-2">Submit patient medical details and doctor prescription for AI verification and auto-approval.</p>
             </div>
             
             <div class="card-body p-4 p-sm-5 pt-2">
                 {% if error %}
-                    <div class="alert alert-danger d-flex align-items-center py-2 shadow-sm premium-card border-0" role="alert">
+                    <div class="alert alert-danger d-flex align-items-center py-2 shadow-sm premium-card border-0 mb-4" role="alert">
                         <i class="bi bi-exclamation-triangle-fill flex-shrink-0 me-3 text-danger fs-5"></i>
                         <div class="fw-medium text-danger">{{ error }}</div>
                     </div>
                 {% endif %}
 
-                <form method="post">
+                <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
                     
-                    <div class="mb-4">
-                        <label for="blood_group" class="form-label text-muted fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Required Blood Group</label>
-                        <div class="input-group shadow-sm" style="border-radius: 8px; overflow: hidden;">
-                            <span class="input-group-text border-0 bg-light text-danger"><i class="bi bi-droplet-half"></i></span>
-                            <select name="blood_group" id="blood_group" class="form-select border-0 ps-2 bg-light" required>
-                                <option value="" disabled selected>-- Select Blood Group --</option>
+                    <h5 class="fw-bold text-danger mb-3">
+                        <i class="bi bi-droplet-fill me-1"></i> Blood Requirement Details
+                    </h5>
+                    
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <label for="blood_group" class="form-label text-muted fw-semibold small text-uppercase">Required Blood Group *</label>
+                            <select name="blood_group" id="blood_group" class="form-select border-0 bg-light shadow-sm py-2" required>
+                                <option value="" disabled selected>-- Select --</option>
                                 {% for group in blood_groups %}
                                     <option value="{{ group.id }}">{{ group.blood_group }}</option>
                                 {% endfor %}
                             </select>
                         </div>
+
+                        <div class="col-md-4">
+                            <label for="units_required" class="form-label text-muted fw-semibold small text-uppercase">Units Required *</label>
+                            <input type="number" name="units_required" id="units_required" class="form-control border-0 bg-light shadow-sm py-2" required placeholder="e.g., 2" min="1">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label for="urgency" class="form-label text-muted fw-semibold small text-uppercase">Urgency Level *</label>
+                            <select name="urgency" id="urgency" class="form-select border-0 bg-light shadow-sm py-2" required>
+                                <option value="NORMAL">Normal (Standard Procedure)</option>
+                                <option value="URGENT">Urgent (Within 24h)</option>
+                                <option value="EMERGENCY">Emergency (Life-threatening / Immediate)</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div class="mb-4">
-                        <label for="units_required" class="form-label text-muted fw-bold small text-uppercase">Units Required</label>
-                        <input type="number" name="units_required" id="units_required" class="form-control border-0 bg-light shadow-sm py-2" required placeholder="e.g., 2" min="1">
+                        <label for="purpose" class="form-label text-muted fw-semibold small text-uppercase">Medical Purpose / Reason *</label>
+                        <input type="text" name="purpose" id="purpose" class="form-control border-0 bg-light shadow-sm py-2" required placeholder="e.g. Heart Surgery, Accident Emergency, Anemia Treatment">
                     </div>
 
-                    <div class="mb-5">
-                        <label for="urgency" class="form-label text-muted fw-bold small text-uppercase">Urgency Level</label>
-                        <select name="urgency" id="urgency" class="form-select border-0 bg-light shadow-sm py-2" required>
-                            <option value="NORMAL">Normal (Standard Procedure)</option>
-                            <option value="URGENT">Urgent (Needed within 24h)</option>
-                            <option value="EMERGENCY">Emergency (Life-threatening / Asap)</option>
-                        </select>
+                    <hr class="my-4 text-muted">
+
+                    <h5 class="fw-bold text-primary mb-3">
+                        <i class="bi bi-person-bounding-box me-1"></i> Patient Information
+                    </h5>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label for="patient_name" class="form-label text-muted fw-semibold small text-uppercase">Patient Full Name *</label>
+                            <input type="text" name="patient_name" id="patient_name" class="form-control border-0 bg-light shadow-sm py-2" required placeholder="Full Name of Patient">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="patient_phone" class="form-label text-muted fw-semibold small text-uppercase">10-Digit Mobile Number *</label>
+                            <input type="tel" name="patient_phone" id="patient_phone" pattern="[0-9]{10}" class="form-control border-0 bg-light shadow-sm py-2" required placeholder="e.g., 9876543210" title="Must be a 10-digit mobile number">
+                        </div>
                     </div>
 
-                    <div class="d-grid gap-3">
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <label for="patient_gender" class="form-label text-muted fw-semibold small text-uppercase">Gender *</label>
+                            <select name="patient_gender" id="patient_gender" class="form-select border-0 bg-light shadow-sm py-2" required>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-8">
+                            <label for="patient_address" class="form-label text-muted fw-semibold small text-uppercase">Hospital / Address Details *</label>
+                            <input type="text" name="patient_address" id="patient_address" class="form-control border-0 bg-light shadow-sm py-2" required placeholder="Hospital Name, Room/Ward #, City">
+                        </div>
+                    </div>
+
+                    <hr class="my-4 text-muted">
+
+                    <h5 class="fw-bold text-success mb-3">
+                        <i class="bi bi-file-earmark-medical-fill me-1"></i> Prescription Document Verification
+                    </h5>
+
+                    <div class="mb-4">
+                        <label for="prescription_document" class="form-label text-muted fw-semibold small text-uppercase">Doctor Prescription Image / PDF *</label>
+                        <input type="file" name="prescription_document" id="prescription_document" class="form-control border-0 bg-light shadow-sm py-2" accept="image/*,.pdf" required>
+                        <div class="form-text text-muted">
+                            <i class="bi bi-shield-check text-success me-1"></i> Uploading a valid doctor prescription allows our AI Agent to verify and <strong>automatically approve</strong> your request without waiting for manual admin delay!
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-3 mt-4">
                         <button type="submit" class="btn btn-primary-custom btn-lg shadow-hover">
-                            <i class="bi bi-send-fill me-2"></i> Submit Request
+                            <i class="bi bi-send-fill me-2"></i> Submit & AI Verify Request
                         </button>
                         <a href="{% url 'dashboard' %}" class="btn btn-secondary-custom btn-lg text-center">
                             <i class="bi bi-arrow-left me-2"></i> Cancel & Return

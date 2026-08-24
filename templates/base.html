@@ -70,6 +70,9 @@
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3 mt-2" aria-labelledby="userDropdown">
                                 <li><a class="dropdown-item py-2" href="{% url 'dashboard' %}"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a></li>
+                                {% if request.user.is_staff %}
+                                <li><a class="dropdown-item py-2" href="{% url 'agent_dashboard' %}"><i class="bi bi-robot me-2 text-danger"></i> AI Emergency Agent</a></li>
+                                {% endif %}
                                 <li><a class="dropdown-item py-2" href="{% url 'profile' %}"><i class="bi bi-person-gear me-2"></i> My Profile</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li>

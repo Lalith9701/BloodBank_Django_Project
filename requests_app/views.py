@@ -5,10 +5,11 @@ from django.utils import timezone
 from django.http import HttpResponse
 import csv
 
-from inventory.models import BloodGroup
+from inventory.models import BloodGroup, BloodStock
 from donors.models import Donor
 from notifications.models import Notification
 from accounts.models import AuditLog
+from agents.services.emergency_agent import run_emergency_dispatch_agent
 from .models import Donation, BloodRequest
 
 
@@ -117,19 +118,40 @@ def request_blood(request):
         units_required = request.POST.get('units_required')
         urgency        = request.POST.get('urgency', 'NORMAL')
 
+        purpose = request.POST.get('purpose', '').strip()
+        patient_name = request.POST.get('patient_name', '').strip()
+        patient_phone = request.POST.get('patient_phone', '').strip()
+        patient_gender = request.POST.get('patient_gender', '').strip()
+        patient_address = request.POST.get('patient_address', '').strip()
+        prescription_doc = request.FILES.get('prescription_document')
+
         if not blood_group_id or not units_required:
             return render(request, 'request_blood.html', {
                 'blood_groups': blood_groups,
-                'error': 'Please fill all fields.'
+                'error': 'Please fill all required fields.'
             })
 
-        BloodRequest.objects.create(
+        blood_req = BloodRequest.objects.create(
             user=request.user,
             blood_group_id=int(blood_group_id),
             units_required=int(units_required),
             urgency=urgency,
+            purpose=purpose,
+            patient_name=patient_name,
+            patient_phone=patient_phone,
+            patient_gender=patient_gender,
+            patient_address=patient_address,
+            prescription_document=prescription_doc,
             status='PENDING'
         )
+
+        # Automatically trigger AI Agent for all request types (NORMAL, URGENT, EMERGENCY)
+        # The agent will automatically approve the request if stock is available without needing admin intervention.
+        try:
+            run_emergency_dispatch_agent(blood_req.id, trigger_type='AUTOMATIC')
+        except Exception:
+            pass
+
         return redirect('dashboard')
 
     return render(request, 'request_blood.html', {'blood_groups': blood_groups})

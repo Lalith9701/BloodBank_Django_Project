@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'requests_app',
     'notifications',
     'ratings',
+    'agents',
 ]
 
 AUTH_USER_MODEL = 'accounts.User'

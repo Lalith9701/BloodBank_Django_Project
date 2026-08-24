@@ -39,6 +39,18 @@ class BloodRequest(models.Model):
 
     rejection_reason = models.TextField(blank=True, null=True)
     
+    # Patient Details & Medical Purpose
+    purpose = models.TextField(blank=True, null=True, help_text="Purpose of blood request (e.g. Surgery, Accident, Anemia)")
+    prescription_document = models.FileField(
+        upload_to='prescriptions/',
+        blank=True, null=True,
+        help_text="Doctor's prescription image or PDF document"
+    )
+    patient_name = models.CharField(max_length=150, blank=True, null=True)
+    patient_phone = models.CharField(max_length=20, blank=True, null=True)
+    patient_gender = models.CharField(max_length=10, blank=True, null=True)
+    patient_address = models.TextField(blank=True, null=True)
+
     # Optional: track which donor fulfilled the request (useful for ratings)
     donor = models.ForeignKey(Donor, on_delete=models.SET_NULL, blank=True, null=True, related_name='fulfilled_requests')
 

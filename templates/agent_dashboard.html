@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+
+{% block title %}AI Emergency Agent Dashboard | BloodBank{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+        <div>
+            <h2 class="fw-bold mb-1">
+                <i class="bi bi-robot text-danger me-2"></i> AI Emergency Agent Control Center
+            </h2>
+            <p class="text-muted mb-0">Autonomous monitoring, medical compatibility matching, and emergency dispatch tracking.</p>
+        </div>
+        <div>
+            <a href="{% url 'admin_requests' %}" class="btn btn-outline-secondary rounded-pill me-2">
+                <i class="bi bi-card-checklist me-1"></i> Admin Requests
+            </a>
+            <a href="{% url 'agent_dashboard' %}" class="btn btn-danger rounded-pill">
+                <i class="bi bi-arrow-clockwise me-1"></i> Refresh Logs
+            </a>
+        </div>
+    </div>
+
+    <!-- Analytics Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-primary text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="small text-white-50 fw-semibold">Total Agent Runs</div>
+                        <div class="fs-2 fw-bold">{{ total_runs }}</div>
+                    </div>
+                    <i class="bi bi-cpu fs-1 text-white-50"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-danger text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="small text-white-50 fw-semibold">Donors Notified</div>
+                        <div class="fs-2 fw-bold">{{ total_notified }}</div>
+                    </div>
+                    <i class="bi bi-send-check-fill fs-1 text-white-50"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-success text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="small text-white-50 fw-semibold">Auto System Triggers</div>
+                        <div class="fs-2 fw-bold">{{ auto_runs }}</div>
+                    </div>
+                    <i class="bi bi-lightning-charge-fill fs-1 text-white-50"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-dark text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="small text-white-50 fw-semibold">Manual Staff Triggers</div>
+                        <div class="fs-2 fw-bold">{{ manual_runs }}</div>
+                    </div>
+                    <i class="bi bi-person-workspace fs-1 text-white-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Agent Execution Logs Table -->
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-header bg-white py-3 border-0">
+            <h5 class="fw-bold mb-0">
+                <i class="bi bi-journal-text text-danger me-2"></i> Agent Execution Audit History
+            </h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Run ID</th>
+                        <th>Timestamp</th>
+                        <th>Request Info</th>
+                        <th>Stock Status</th>
+                        <th>Compatible Groups</th>
+                        <th>Matched Donors</th>
+                        <th>Trigger Source</th>
+                        <th>Reasoning & Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td>
+                            <span class="badge bg-secondary">#{{ log.id }}</span>
+                        </td>
+                        <td class="small text-muted">
+                            {{ log.created_at|date:"Y-m-d H:i" }}
+                        </td>
+                        <td>
+                            <div class="fw-bold">Request #{{ log.blood_request.id }}</div>
+                            <span class="badge bg-danger">{{ log.requested_blood_group }}</span>
+                            <span class="small text-muted">{{ log.units_requested }} units</span>
+                        </td>
+                        <td>
+                            {% if log.stock_available < log.units_requested %}
+                                <span class="badge bg-warning text-dark"><i class="bi bi-exclamation-triangle-fill"></i> Shortage ({{ log.stock_available }} in stock)</span>
+                            {% else %}
+                                <span class="badge bg-success"><i class="bi bi-check-circle-fill"></i> Sufficient ({{ log.stock_available }} in stock)</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="small font-monospace text-primary fw-bold">{{ log.compatible_blood_groups }}</span>
+                        </td>
+                        <td>
+                            <div class="fw-bold text-success">{{ log.donors_notified_count }} Notified</div>
+                            <div class="small text-muted">from {{ log.eligible_donors_found }} eligible candidate(s)</div>
+                        </td>
+                        <td>
+                            {% if log.trigger_type == 'AUTOMATIC' %}
+                                <span class="badge bg-primary rounded-pill"><i class="bi bi-gear-wide-connected"></i> Automatic</span>
+                            {% else %}
+                                <span class="badge bg-dark rounded-pill"><i class="bi bi-hand-index-thumb"></i> Manual Admin</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-danger rounded-pill" type="button" data-bs-toggle="collapse" data-bs-target="#reasoning{{ log.id }}" aria-expanded="false">
+                                <i class="bi bi-search me-1"></i> View Agent Logic
+                            </button>
+                            <a href="{% url 'trigger_agent' log.blood_request.id %}" class="btn btn-sm btn-light border rounded-pill ms-1" title="Re-run AI Agent">
+                                <i class="bi bi-arrow-repeat text-danger"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    <tr class="collapse bg-light" id="reasoning{{ log.id }}">
+                        <td colspan="8" class="p-3">
+                            <div class="p-3 bg-white rounded-3 border">
+                                <h6 class="fw-bold text-danger mb-2">
+                                    <i class="bi bi-cpu-fill me-1"></i> Agent Decision Matrix & Reasoning Log
+                                </h6>
+                                <pre class="mb-0 small text-dark" style="white-space: pre-wrap; font-family: 'Inter', sans-serif;">{{ log.reasoning_summary }}</pre>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-5 text-muted">
+                            <i class="bi bi-robot fs-1 d-block mb-2 text-secondary"></i>
+                            No agent executions recorded yet. Submit an emergency blood request to trigger the AI agent!
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

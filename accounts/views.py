@@ -268,16 +268,31 @@ def dashboard(request):
         return redirect('login')
 
     if user.role == 'ADMIN':
+        from agents.models import AgentExecutionLog
+        from django.db.models import Sum
+
+        ai_logs = AgentExecutionLog.objects.select_related('blood_request', 'blood_request__user')
+        ai_total_runs = ai_logs.count()
+        ai_donors_notified = ai_logs.aggregate(Sum('donors_notified_count'))['donors_notified_count__sum'] or 0
+        pending_prescriptions = BloodRequest.objects.filter(status='PENDING').exclude(prescription_document='').count()
+
         stats = {
-            'total_donors':     Donor.objects.count(),
-            'total_requests':   BloodRequest.objects.count(),
-            'pending_requests': BloodRequest.objects.filter(status='PENDING').count(),
-            'pending_health':   Donor.objects.filter(eligibility_status='PENDING').count(),
-            'total_donations':  Donation.objects.count(),
-            'low_stock':        BloodStock.objects.filter(units_available__lt=5).count(),
-            'unread_messages':  ContactAdminMessage.objects.filter(is_read=False).count(),
+            'total_donors':          Donor.objects.count(),
+            'total_requests':        BloodRequest.objects.count(),
+            'pending_requests':      BloodRequest.objects.filter(status='PENDING').count(),
+            'pending_health':        Donor.objects.filter(eligibility_status='PENDING').count(),
+            'total_donations':       Donation.objects.count(),
+            'low_stock':             BloodStock.objects.filter(units_available__lt=5).count(),
+            'unread_messages':       ContactAdminMessage.objects.filter(is_read=False).count(),
+            'ai_total_runs':         ai_total_runs,
+            'ai_donors_notified':    ai_donors_notified,
+            'pending_prescriptions': pending_prescriptions,
         }
-        return render(request, 'admin_dashboard.html', {'stats': stats})
+        recent_ai_logs = ai_logs[:5]
+        return render(request, 'admin_dashboard.html', {
+            'stats': stats,
+            'recent_ai_logs': recent_ai_logs,
+        })
 
     elif user.role == 'DONOR':
         has_emergency = BloodRequest.objects.filter(

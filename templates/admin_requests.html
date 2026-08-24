@@ -4,14 +4,17 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4 mt-3">
     <h2 class="fw-bold mb-0" style="color: var(--secondary); font-size: 2.2rem;">
-        <i class="bi bi-inboxes-fill me-2" style="color: var(--primary);"></i>Manage Requests
+        <i class="bi bi-inboxes-fill me-2" style="color: var(--primary);"></i>Manage Requests & Prescriptions
     </h2>
     <div class="d-flex gap-2">
-        <a href="{% url 'export_requests_csv' %}" class="btn btn-outline-success shadow-sm rounded-pill px-4">
+        <a href="{% url 'agent_dashboard' %}" class="btn btn-outline-danger shadow-sm rounded-pill px-3">
+            <i class="bi bi-robot me-1"></i> AI Agent Dashboard
+        </a>
+        <a href="{% url 'export_requests_csv' %}" class="btn btn-outline-success shadow-sm rounded-pill px-3">
             <i class="bi bi-file-earmark-excel me-1"></i> Export Requests
         </a>
         <a href="{% url 'dashboard' %}" class="btn btn-secondary-custom shadow-sm">
-            <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
+            <i class="bi bi-arrow-left me-1"></i> Back
         </a>
     </div>
 </div>
@@ -22,10 +25,10 @@
             <table class="table table-premium table-borderless align-middle text-center mb-0">
                 <thead>
                     <tr>
-                        <th>User</th>
+                        <th>User & Patient Details</th>
                         <th>Blood Group</th>
-                        <th>Units</th>
-                        <th>Urgency</th>
+                        <th>Units & Urgency</th>
+                        <th>Prescription Document</th>
                         <th>Status</th>
                         <th>Actions</th>
                     </tr>
@@ -34,11 +37,21 @@
                     
                     {% for req in requests %}
                     <tr class="{% if req.urgency == 'EMERGENCY' %}bg-error-subtle{% elif req.urgency == 'URGENT' %}bg-warning-subtle{% endif %}">
-                        <td class="fw-semibold text-secondary">
-                            <div class="d-flex align-items-center justify-content-center">
-                                <i class="bi bi-person-circle fs-5 me-2 text-primary-light"></i> 
-                                {{ req.user.username }}
+                        <td class="text-start ps-4">
+                            <div class="fw-bold text-dark">
+                                <i class="bi bi-person-circle text-primary me-1"></i> {{ req.user.username }}
                             </div>
+                            {% if req.patient_name %}
+                                <div class="small text-secondary mt-1">
+                                    <i class="bi bi-hospital me-1"></i> <strong>Patient:</strong> {{ req.patient_name }} ({{ req.patient_gender }})
+                                </div>
+                                <div class="small text-secondary">
+                                    <i class="bi bi-telephone me-1"></i> {{ req.patient_phone }}
+                                </div>
+                                <div class="small text-muted text-truncate" style="max-width: 220px;" title="{{ req.purpose }}">
+                                    <i class="bi bi-journal-medical me-1"></i> {{ req.purpose }}
+                                </div>
+                            {% endif %}
                         </td>
                         <td>
                             <span class="badge bg-light border fs-6 px-3 py-2 rounded-pill shadow-sm text-primary">
@@ -46,20 +59,29 @@
                             </span>
                         </td>
                         <td>
-                            <span class="fw-bold fs-5 text-dark">{{ req.units_required }}</span> 
-                        </td>
-                        <td>
+                            <div class="fw-bold fs-5 text-dark mb-1">{{ req.units_required }} Units</div> 
                             {% if req.urgency == "EMERGENCY" %}
-                                <span class="badge bg-danger text-white px-3 py-2 rounded-pill shadow-sm animate-pulse">
+                                <span class="badge bg-danger text-white px-3 py-1 rounded-pill shadow-sm animate-pulse">
                                     <i class="bi bi-exclamation-octagon-fill me-1"></i> EMERGENCY
                                 </span>
                             {% elif req.urgency == "URGENT" %}
-                                <span class="badge bg-warning text-dark px-3 py-2 rounded-pill shadow-sm">
+                                <span class="badge bg-warning text-dark px-3 py-1 rounded-pill shadow-sm">
                                     <i class="bi bi-exclamation-triangle-fill me-1"></i> URGENT
                                 </span>
                             {% else %}
-                                <span class="badge bg-info text-white px-3 py-2 rounded-pill shadow-sm">
+                                <span class="badge bg-info text-white px-3 py-1 rounded-pill shadow-sm">
                                     <i class="bi bi-info-circle-fill me-1"></i> NORMAL
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if req.prescription_document %}
+                                <a href="{{ req.prescription_document.url }}" target="_blank" class="btn btn-sm btn-outline-success rounded-pill px-3 shadow-sm">
+                                    <i class="bi bi-file-earmark-medical me-1"></i> View Prescription
+                                </a>
+                            {% else %}
+                                <span class="badge bg-secondary rounded-pill px-3 py-2">
+                                    <i class="bi bi-x-circle me-1"></i> No Prescription
                                 </span>
                             {% endif %}
                         </td>
@@ -91,7 +113,10 @@
                                         </button>
                                     </form>
 
-                                    <!-- Rejection with Modal-like logic (Simple text toggle) -->
+                                    <a href="{% url 'trigger_agent' req.id %}" class="btn btn-sm btn-outline-danger fw-bold shadow-sm rounded-pill px-3" title="Run AI Emergency Agent">
+                                        <i class="bi bi-cpu me-1"></i> AI Dispatch
+                                    </a>
+
                                     <button type="button" class="btn btn-sm btn-outline-danger fw-bold shadow-sm rounded-pill px-3 bg-white" 
                                             onclick="document.getElementById('rejectForm{{req.id}}').classList.toggle('d-none')">
                                         <i class="bi bi-x-lg me-1"></i> Reject

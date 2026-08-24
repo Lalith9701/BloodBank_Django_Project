@@ -11,6 +11,7 @@ urlpatterns = [
     path('donors/', include('donors.urls')),
     path('notifications/', include('notifications.urls')),
     path('ratings/', include('ratings.urls')),
+    path('agents/', include('agents.urls')),
 ]
 
 # Serve uploaded media files during development
