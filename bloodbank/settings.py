@@ -19,11 +19,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ============================================================
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-bloodbank-project-key')
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
 
 # ============================================================
 # CSRF
 # ============================================================
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.onrender.com',
+    'http://*.onrender.com',
+]
 CSRF_COOKIE_SAMESITE  = 'Lax'
 CSRF_COOKIE_HTTPONLY  = False   # must be False so JS can read it if needed
 CSRF_COOKIE_AGE       = 60 * 60 * 24  # 24 hours — prevents stale token on long sessions
