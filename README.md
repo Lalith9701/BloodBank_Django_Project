@@ -37,7 +37,6 @@ The **Blood Bank Management System** is a robust web platform designed to stream
 * **Account Deactivation Guard**: Inactive users are safely restricted and can submit reactivation requests via an embedded contact form on the login page.
 * **Audit Logging**: Immutable system audit trail (`AuditLog`) tracking all administrative approvals, rejections, and state changes.
 
----
 
 ### 2. Donor Management (`donors`)
 * **Donor Registration**: Captures blood group, age, gender, weight, address, city, state, pincode, and health history.
