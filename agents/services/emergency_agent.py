@@ -116,7 +116,7 @@ def run_emergency_dispatch_agent(blood_request_id: int, trigger_type: str = 'AUT
             last_donation = Donation.objects.filter(donor=donor).order_by('-donation_date').first()
             if last_donation:
                 days_since = (now - last_donation.donation_date).days
-                if days_since < 90:
+                if days_since < donor.cooldown_days:
                     excluded_cooldown_count += 1
                     continue
             eligible_donors.append(donor)

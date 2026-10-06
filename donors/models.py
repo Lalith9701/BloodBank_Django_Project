@@ -35,5 +35,12 @@ class Donor(models.Model):
     state = models.CharField(max_length=100, blank=True, null=True)
     nation = models.CharField(max_length=100, blank=True, null=True)
 
+    @property
+    def cooldown_days(self):
+        """Returns required cooling period between blood donations: 90 days for men, 120 days for women."""
+        if self.gender and self.gender.strip().lower() == 'female':
+            return 120
+        return 90
+
     def __str__(self):
         return self.user.username

@@ -48,17 +48,18 @@ def add_donation(request):
                 'error': 'Your donation cannot be processed because your health status was rejected by an Admin.'
             })
 
-        # 90-day cooldown check
+        # Gender-based cooling period check (90 days for men, 120 days for women)
+        cooldown = donor.cooldown_days
         last_donation = Donation.objects.filter(donor=donor).order_by('-donation_date').first()
         if last_donation:
             days_since = (timezone.now() - last_donation.donation_date).days
-            if days_since < 90:
+            if days_since < cooldown:
                 return render(request, 'add_donation.html', {
                     'blood_groups': blood_groups, 'donor': donor,
                     'error': (
-                        f'You must wait 90 days between donations. '
+                        f'You must wait {cooldown} days between donations ({donor.gender} cooling period). '
                         f'Your last donation was {days_since} days ago. '
-                        f'Please wait {90 - days_since} more days.'
+                        f'Please wait {cooldown - days_since} more days.'
                     )
                 })
 

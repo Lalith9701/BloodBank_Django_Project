@@ -22,18 +22,16 @@
                         <div>
                             <div class="fw-bold mb-1">Please fix the following errors:</div>
                             <ul class="mb-0 ps-3 small">
-                                {% for field, msg in field_errors.items %}
-                                    {% if msg|length > 1 and msg != msg|slice:":1" %}
-                                        {% for m in msg %}<li>{{ m }}</li>{% endfor %}
-                                    {% else %}
-                                        <li>{{ msg }}</li>
-                                    {% endif %}
+                                {% for field, msgs in field_errors.items %}
+                                    {% for m in msgs %}
+                                        <li>{{ m }}</li>
+                                    {% endfor %}
                                 {% endfor %}
                             </ul>
                         </div>
                     </div>
                 {% endif %}
-                <form method="post" enctype="multipart/form-data">
+                <form method="post" enctype="multipart/form-data" novalidate>
                     {% csrf_token %}
 
                     <!-- ROW 1: Name -->
@@ -46,7 +44,7 @@
                                 placeholder="John Doe" required>
                             {% if field_errors.full_name %}
                                 <div class="invalid-feedback d-block small">
-                                    <i class="bi bi-exclamation-circle-fill me-1"></i>{{ field_errors.full_name }}
+                                    <i class="bi bi-exclamation-circle-fill me-1"></i>{% for m in field_errors.full_name %}{{ m }}{% endfor %}
                                 </div>
                             {% endif %}
                         </div>
@@ -55,11 +53,15 @@
                             <input type="email" class="form-control border-0 bg-light shadow-sm py-2 {% if field_errors.email %}is-invalid{% endif %}"
                                 id="email" name="email"
                                 value="{{ form_data.email|default:'' }}"
-                                placeholder="john@example.com" required>
+                                placeholder="johndoe111@gmail.com" required
+                                pattern="^[a-zA-Z][a-zA-Z0-9._%+-]*@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+                                title="Email username must start with a letter, e.g., johndoe111@gmail.com">
                             {% if field_errors.email %}
                                 <div class="invalid-feedback d-block small">
-                                    <i class="bi bi-exclamation-circle-fill me-1"></i>{{ field_errors.email }}
+                                    <i class="bi bi-exclamation-circle-fill me-1"></i>{% for m in field_errors.email %}{{ m }}{% endfor %}
                                 </div>
+                            {% else %}
+                                <div class="form-text small mt-1">Example: johndoe111@gmail.com</div>
                             {% endif %}
                         </div>
                     </div>
@@ -73,12 +75,16 @@
                                 <input type="tel" class="form-control border-0 ps-2 bg-light {% if field_errors.phone %}is-invalid{% endif %}"
                                     id="phone" name="phone"
                                     value="{{ form_data.phone|default:'' }}"
-                                    placeholder="Enter your phone number" required>
+                                    placeholder="10-digit mobile number"
+                                    maxlength="10" minlength="10" pattern="^[0-9]{10}$"
+                                    title="Mobile number must be exactly 10 digits" required>
                             </div>
                             {% if field_errors.phone %}
                                 <div class="text-danger small mt-1">
-                                    <i class="bi bi-exclamation-circle-fill me-1"></i>{{ field_errors.phone }}
+                                    <i class="bi bi-exclamation-circle-fill me-1"></i>{% for m in field_errors.phone %}{{ m }}{% endfor %}
                                 </div>
+                            {% else %}
+                                <div class="form-text small mt-1">Must be exactly 10 digits (e.g., 9876543210).</div>
                             {% endif %}
                         </div>
                         <div class="col-md-6">
@@ -127,7 +133,7 @@
                             </div>
                             <div id="confirm-msg" class="form-text small mt-1">
                                 {% if field_errors.confirm_password %}
-                                    <span class="text-danger"><i class="bi bi-x-circle-fill me-1"></i>{{ field_errors.confirm_password }}</span>
+                                    <span class="text-danger"><i class="bi bi-x-circle-fill me-1"></i>{% for m in field_errors.confirm_password %}{{ m }}{% endfor %}</span>
                                 {% endif %}
                             </div>
                         </div>
@@ -142,9 +148,9 @@
                                         class="bi bi-droplet-fill"></i></span>
                                 <select name="blood_group" id="blood_group" class="form-select border-0 ps-2 bg-light"
                                     required>
-                                    <option value="" disabled selected>-- Select Blood Group --</option>
+                                    <option value="" disabled {% if not form_data.blood_group %}selected{% endif %}>-- Select Blood Group --</option>
                                     {% for group in blood_groups %}
-                                    <option value="{{ group.id }}">{{ group.blood_group }}</option>
+                                    <option value="{{ group.id }}" {% if form_data.blood_group == group.id|stringformat:"i" or form_data.blood_group == group.id %}selected{% endif %}>{{ group.blood_group }}</option>
                                     {% endfor %}
                                 </select>
                             </div>
@@ -156,10 +162,17 @@
                             <div class="input-group shadow-sm" style="border-radius: 8px; overflow: hidden;">
                                 <span class="input-group-text border-0 bg-light"><i
                                         class="bi bi-calendar-event text-muted"></i></span>
-                                <input type="number" class="form-control border-0 ps-2 bg-light" id="age" name="age"
-                                    placeholder="e.g., 25" min="18" required>
+                                <input type="number" class="form-control border-0 ps-2 bg-light {% if field_errors.age %}is-invalid{% endif %}" id="age" name="age"
+                                    value="{{ form_data.age|default:'' }}"
+                                    placeholder="e.g., 25" min="18" max="65" required>
                             </div>
-                            <div class="form-text small mt-1">Must be at least 18 years old to donate.</div>
+                            <div id="age-error" class="{% if field_errors.age %}text-danger{% else %}form-text{% endif %} small mt-1">
+                                {% if field_errors.age %}
+                                    <i class="bi bi-exclamation-circle-fill me-1"></i>{% for m in field_errors.age %}{{ m }}{% endfor %}
+                                {% else %}
+                                    Must be between 18 and 65 years old to donate.
+                                {% endif %}
+                            </div>
                         </div>
 
                         <div class="col-md-6">
@@ -169,10 +182,10 @@
                                 <span class="input-group-text border-0 bg-light"><i
                                         class="bi bi-gender-ambiguous text-muted"></i></span>
                                 <select name="gender" id="gender" class="form-select border-0 ps-2 bg-light" required>
-                                    <option value="" disabled selected>-- Select Gender --</option>
-                                    <option value="Male">Male</option>
-                                    <option value="Female">Female</option>
-                                    <option value="Other">Other</option>
+                                    <option value="" disabled {% if not form_data.gender %}selected{% endif %}>-- Select Gender --</option>
+                                    <option value="Male" {% if form_data.gender == 'Male' %}selected{% endif %}>Male</option>
+                                    <option value="Female" {% if form_data.gender == 'Female' %}selected{% endif %}>Female</option>
+                                    <option value="Other" {% if form_data.gender == 'Other' %}selected{% endif %}>Other</option>
                                 </select>
                             </div>
                         </div>
@@ -185,8 +198,15 @@
                             <div class="input-group shadow-sm" style="border-radius: 8px; overflow: hidden;">
                                 <span class="input-group-text border-0 bg-light text-muted"><i
                                         class="bi bi-speedometer2"></i></span>
-                                <input type="number" step="0.1" class="form-control border-0 ps-2 bg-light" id="weight"
-                                    name="weight" placeholder="e.g., 65" min="45" required>
+                                <input type="number" step="0.1" class="form-control border-0 ps-2 bg-light {% if field_errors.weight %}is-invalid{% endif %}" id="weight"
+                                    name="weight" value="{{ form_data.weight|default:'' }}" placeholder="e.g., 65" min="45" required>
+                            </div>
+                            <div id="weight-error" class="{% if field_errors.weight %}text-danger{% else %}form-text{% endif %} small mt-1">
+                                {% if field_errors.weight %}
+                                    <i class="bi bi-exclamation-circle-fill me-1"></i>{% for m in field_errors.weight %}{{ m }}{% endfor %}
+                                {% else %}
+                                    Must be at least 45 kg to donate blood.
+                                {% endif %}
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -261,7 +281,7 @@
 
                             {% if field_errors.health_document %}
                                 <div class="text-danger small mt-1">
-                                    <i class="bi bi-exclamation-circle-fill me-1"></i>{{ field_errors.health_document }}
+                                    <i class="bi bi-exclamation-circle-fill me-1"></i>{% for m in field_errors.health_document %}{{ m }}{% endfor %}
                                 </div>
                             {% endif %}
                             <div class="form-text small mt-1 text-muted">
@@ -289,7 +309,7 @@
                                 </select>
                             </div>
                             {% if field_errors.security_question %}
-                                <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle-fill me-1"></i>{{ field_errors.security_question }}</div>
+                                <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle-fill me-1"></i>{% for m in field_errors.security_question %}{{ m }}{% endfor %}</div>
                             {% endif %}
                         </div>
                         <div class="col-12">
@@ -302,7 +322,7 @@
                                     placeholder="Your answer (case-insensitive)" required autocomplete="off">
                             </div>
                             {% if field_errors.security_answer %}
-                                <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle-fill me-1"></i>{{ field_errors.security_answer }}</div>
+                                <div class="text-danger small mt-1"><i class="bi bi-exclamation-circle-fill me-1"></i>{% for m in field_errors.security_answer %}{{ m }}{% endfor %}</div>
                             {% else %}
                                 <div class="form-text small mt-1">Answer is stored securely and is not case-sensitive.</div>
                             {% endif %}
@@ -540,12 +560,86 @@
     }
     confirmEl.addEventListener('input', checkConfirm);
 
-    // Block submit if passwords don't match
+    // ── Age & Weight Dynamic JS Validation ────────────────────
+    const ageInput = document.getElementById('age');
+    const ageError = document.getElementById('age-error');
+    const weightInput = document.getElementById('weight');
+    const weightError = document.getElementById('weight-error');
+
+    function validateAge() {
+        if (!ageInput) return true;
+        const val = parseInt(ageInput.value, 10);
+        if (!ageInput.value || isNaN(val)) {
+            ageInput.classList.add('is-invalid');
+            ageError.className = 'text-danger small mt-1';
+            ageError.innerHTML = '<i class="bi bi-exclamation-circle-fill me-1"></i>Age is required and must be between 18 and 65.';
+            return false;
+        }
+        if (val < 18 || val > 65) {
+            ageInput.classList.add('is-invalid');
+            ageError.className = 'text-danger small mt-1';
+            ageError.innerHTML = '<i class="bi bi-exclamation-circle-fill me-1"></i>Age must be between 18 and 65 years old to donate blood.';
+            return false;
+        } else {
+            ageInput.classList.remove('is-invalid');
+            ageError.className = 'text-success small mt-1';
+            ageError.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i>Valid age for donation (18–65)';
+            return true;
+        }
+    }
+
+    function validateWeight() {
+        if (!weightInput) return true;
+        const val = parseFloat(weightInput.value);
+        if (!weightInput.value || isNaN(val)) {
+            weightInput.classList.add('is-invalid');
+            weightError.className = 'text-danger small mt-1';
+            weightError.innerHTML = '<i class="bi bi-exclamation-circle-fill me-1"></i>Weight is required and must be at least 45 kg.';
+            return false;
+        }
+        if (val < 45) {
+            weightInput.classList.add('is-invalid');
+            weightError.className = 'text-danger small mt-1';
+            weightError.innerHTML = '<i class="bi bi-exclamation-circle-fill me-1"></i>Weight must be at least 45 kg to donate blood.';
+            return false;
+        } else {
+            weightInput.classList.remove('is-invalid');
+            weightError.className = 'text-success small mt-1';
+            weightError.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i>Valid weight for donation (≥ 45 kg)';
+            return true;
+        }
+    }
+
+    if (ageInput) {
+        ageInput.addEventListener('input', validateAge);
+        ageInput.addEventListener('blur', validateAge);
+    }
+    if (weightInput) {
+        weightInput.addEventListener('input', validateWeight);
+        weightInput.addEventListener('blur', validateWeight);
+    }
+
+    // Block submit if password, age, or weight invalid
     document.querySelector('form').addEventListener('submit', function (e) {
-        if (pwInput.value !== confirmEl.value) {
+        const isPwOk = (pwInput.value === confirmEl.value);
+        const isAgeOk = validateAge();
+        const isWeightOk = validateWeight();
+
+        if (!isPwOk) {
             e.preventDefault();
             confirmMsg.innerHTML = '<span class="text-danger"><i class="bi bi-x-circle-fill me-1"></i>Passwords do not match</span>';
             confirmEl.focus();
+            return;
+        }
+        if (!isAgeOk) {
+            e.preventDefault();
+            ageInput.focus();
+            return;
+        }
+        if (!isWeightOk) {
+            e.preventDefault();
+            weightInput.focus();
+            return;
         }
     });
 

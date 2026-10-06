@@ -164,41 +164,63 @@ def register(request):
         field_errors = {}
 
         if not phone:
-            field_errors['phone'] = 'Mobile number is required.'
-        elif not phone.isdigit() or len(phone) < 10:
-            field_errors['phone'] = 'Enter a valid 10-digit mobile number.'
+            field_errors['phone'] = ['Mobile number is required.']
+        elif not phone.isdigit() or len(phone) != 10:
+            field_errors['phone'] = ['Mobile number must be exactly 10 digits.']
         elif User.objects.filter(username=phone).exists():
-            field_errors['phone'] = 'This mobile number is already registered.'
+            field_errors['phone'] = ['This mobile number is already registered.']
 
         if not email:
-            field_errors['email'] = 'Email address is required.'
+            field_errors['email'] = ['Email address is required.']
+        elif not re.match(r'^[a-zA-Z][a-zA-Z0-9._%+-]*@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email):
+            field_errors['email'] = ['Enter a valid email address (e.g., johndoe111@gmail.com). Email username must start with a letter.']
         elif User.objects.filter(email__iexact=email).exists():
-            field_errors['email'] = 'This email is already registered.'
+            field_errors['email'] = ['This email is already registered.']
+
+        if not age:
+            field_errors['age'] = ['Age is required.']
+        else:
+            try:
+                age_val = int(age)
+                if age_val < 18 or age_val > 65:
+                    field_errors['age'] = ['Age must be between 18 and 65 years old to donate blood.']
+            except ValueError:
+                field_errors['age'] = ['Enter a valid age.']
+
+        if not weight:
+            field_errors['weight'] = ['Weight is required.']
+        else:
+            try:
+                weight_val = float(weight)
+                if weight_val < 45:
+                    field_errors['weight'] = ['Weight must be at least 45 kg to donate blood.']
+            except ValueError:
+                field_errors['weight'] = ['Enter a valid weight in kg.']
 
         if first_name and User.objects.filter(
             first_name__iexact=first_name, last_name__iexact=last_name
         ).exists():
-            field_errors['full_name'] = 'A user with this full name already exists.'
+            field_errors['full_name'] = ['A user with this full name already exists.']
 
         pw_errors = validate_strong_password(password)
         if pw_errors:
             field_errors['password'] = pw_errors
 
         if password and confirm_password and password != confirm_password:
-            field_errors['confirm_password'] = 'Passwords do not match.'
+            field_errors['confirm_password'] = ['Passwords do not match.']
 
         if not question_key or question_key not in dict(SECURITY_QUESTIONS):
-            field_errors['security_question'] = 'Please select a valid security question.'
+            field_errors['security_question'] = ['Please select a valid security question.']
         if not sq_answer:
-            field_errors['security_answer'] = 'Security answer is required.'
+            field_errors['security_answer'] = ['Security answer is required.']
 
         has_health_issue = (health_issue == "True")
         if has_health_issue and health_document:
             allowed = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf']
             if health_document.content_type not in allowed:
-                field_errors['health_document'] = 'Only JPG, PNG, or PDF files are allowed.'
+                field_errors['health_document'] = ['Only JPG, PNG, or PDF files are allowed.']
             elif health_document.size > 5 * 1024 * 1024:
-                field_errors['health_document'] = 'File size must not exceed 5 MB.'
+                field_errors['health_document'] = ['File size must not exceed 5 MB.']
 
         if field_errors:
             return render(request, 'register.html', {
@@ -233,11 +255,11 @@ def register(request):
         except IntegrityError as e:
             err_str = str(e).lower()
             if 'email' in err_str:
-                field_errors['email'] = 'This email is already registered.'
+                field_errors['email'] = ['This email is already registered.']
             elif 'phone' in err_str or 'username' in err_str:
-                field_errors['phone'] = 'This mobile number is already registered.'
+                field_errors['phone'] = ['This mobile number is already registered.']
             else:
-                field_errors['__all__'] = 'Registration failed due to a conflict. Please check your details.'
+                field_errors['__all__'] = ['Registration failed due to a conflict. Please check your details.']
             return render(request, 'register.html', {
                 'blood_groups': blood_groups,
                 'security_questions': SECURITY_QUESTIONS,
