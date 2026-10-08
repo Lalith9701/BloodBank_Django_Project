@@ -202,9 +202,8 @@ def my_donations(request):
 
 
 # ===================================
-# REQUEST BLOOD
+# REQUEST BLOOD (Guest & Logged-In)
 # ===================================
-@login_required
 def request_blood(request):
     blood_groups = BloodGroup.objects.all()
 
@@ -226,8 +225,10 @@ def request_blood(request):
                 'error': 'Please fill all required fields.'
             })
 
+        req_user = request.user if request.user.is_authenticated else None
+
         blood_req = BloodRequest.objects.create(
-            user=request.user,
+            user=req_user,
             blood_group_id=int(blood_group_id),
             units_required=int(units_required),
             urgency=urgency,
@@ -241,13 +242,17 @@ def request_blood(request):
         )
 
         # Automatically trigger AI Agent for all request types (NORMAL, URGENT, EMERGENCY)
-        # The agent will automatically approve the request if stock is available without needing admin intervention.
         try:
             run_emergency_dispatch_agent(blood_req.id, trigger_type='AUTOMATIC')
         except Exception:
             pass
 
-        return redirect('dashboard')
+        if request.user.is_authenticated:
+            messages.success(request, "Emergency Blood Request submitted successfully! Our AI agent is processing matching donors.")
+            return redirect('dashboard')
+        else:
+            messages.success(request, "🚨 Emergency Blood Request submitted! Our AI Dispatch System is automatically finding and notifying matching donors.")
+            return redirect('blood_availability')
 
     return render(request, 'request_blood.html', {'blood_groups': blood_groups})
 

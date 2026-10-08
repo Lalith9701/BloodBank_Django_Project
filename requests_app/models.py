@@ -21,7 +21,7 @@ class BloodRequest(models.Model):
         ('EMERGENCY', 'Emergency'),
     )
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='blood_requests')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='blood_requests', null=True, blank=True)
     blood_group = models.ForeignKey(BloodGroup, on_delete=models.CASCADE)
     units_required = models.PositiveIntegerField()
 
@@ -80,7 +80,8 @@ class BloodRequest(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.user.username} - {self.blood_group}"
+        username = self.user.username if self.user else (self.patient_name or 'Guest Patient')
+        return f"{username} - {self.blood_group}"
 
 
 # =====================================

@@ -110,7 +110,7 @@
                         <button type="submit" class="btn btn-primary-custom btn-lg shadow-hover">
                             <i class="bi bi-send-fill me-2"></i> Submit & AI Verify Request
                         </button>
-                        <a href="{% url 'dashboard' %}" class="btn btn-secondary-custom btn-lg text-center">
+                        <a href="{% if request.user.is_authenticated %}{% url 'dashboard' %}{% else %}{% url 'blood_availability' %}{% endif %}" class="btn btn-secondary-custom btn-lg text-center">
                             <i class="bi bi-arrow-left me-2"></i> Cancel & Return
                         </a>
                     </div>
