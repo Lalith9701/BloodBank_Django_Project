@@ -170,8 +170,50 @@
     {% block extra_js %}{% endblock %}
     
     <!-- Floating Emergency Request Button -->
-    <a href="{% url 'request_blood' %}" class="floating-emergency-btn shadow-hover" title="Emergency Blood Request">
-        <i class="bi bi-heart-pulse-fill"></i>
-    </a>
+    {% if request.user.is_authenticated %}
+        <a href="{% url 'request_blood' %}" class="floating-emergency-btn shadow-hover" title="Emergency Blood Request">
+            <i class="bi bi-heart-pulse-fill"></i>
+        </a>
+    {% else %}
+        <a href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#loginRequiredModal" class="floating-emergency-btn shadow-hover" title="Emergency Blood Request">
+            <i class="bi bi-heart-pulse-fill"></i>
+        </a>
+
+        <!-- Modal: Login / Register Mandatory for Emergency Blood Request -->
+        <div class="modal fade" id="loginRequiredModal" tabindex="-1" aria-labelledby="loginRequiredModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                    <div class="modal-header border-0 bg-danger text-white py-3">
+                        <h5 class="modal-title fw-bold" id="loginRequiredModalLabel">
+                            <i class="bi bi-shield-lock-fill me-2"></i> Authentication Mandatory
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4 text-center">
+                        <div class="icon-circle mb-3 border border-2 shadow-sm mx-auto" style="width: 70px; height: 70px; border-radius: 50%; background-color: rgba(220, 38, 38, 0.1); color: #dc2626; display: flex; align-items: center; justify-content: center; font-size: 2.2rem;">
+                            <i class="bi bi-heart-pulse-fill"></i>
+                        </div>
+                        <h4 class="fw-bold text-dark mb-2">Emergency Blood Request</h4>
+                        <p class="text-muted small mb-4">
+                            For security and patient verification, <strong>Login or Account Registration is mandatory</strong> to submit an Emergency Blood Request.
+                        </p>
+                        <div class="d-grid gap-2">
+                            <a href="{% url 'login' %}?next={% url 'request_blood' %}" class="btn btn-danger btn-lg rounded-pill fw-bold shadow-sm">
+                                <i class="bi bi-box-arrow-in-right me-2"></i> Login to Request Blood
+                            </a>
+                            <a href="{% url 'register' %}" class="btn btn-outline-danger btn-lg rounded-pill fw-bold">
+                                <i class="bi bi-person-plus-fill me-2"></i> Register New Account
+                            </a>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 bg-light justify-content-center py-2">
+                        <span class="small text-muted">
+                            <i class="bi bi-telephone-fill text-danger me-1"></i> 24/7 Emergency Hotline: <strong>1800-BLOOD-HELP</strong>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
 </body>
 </html>

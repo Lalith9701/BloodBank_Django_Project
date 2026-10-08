@@ -202,8 +202,9 @@ def my_donations(request):
 
 
 # ===================================
-# REQUEST BLOOD (Guest & Logged-In)
+# REQUEST BLOOD (Login Mandatory)
 # ===================================
+@login_required
 def request_blood(request):
     blood_groups = BloodGroup.objects.all()
 
@@ -225,10 +226,8 @@ def request_blood(request):
                 'error': 'Please fill all required fields.'
             })
 
-        req_user = request.user if request.user.is_authenticated else None
-
         blood_req = BloodRequest.objects.create(
-            user=req_user,
+            user=request.user,
             blood_group_id=int(blood_group_id),
             units_required=int(units_required),
             urgency=urgency,
@@ -247,12 +246,8 @@ def request_blood(request):
         except Exception:
             pass
 
-        if request.user.is_authenticated:
-            messages.success(request, "Emergency Blood Request submitted successfully! Our AI agent is processing matching donors.")
-            return redirect('dashboard')
-        else:
-            messages.success(request, "🚨 Emergency Blood Request submitted! Our AI Dispatch System is automatically finding and notifying matching donors.")
-            return redirect('blood_availability')
+        messages.success(request, "Emergency Blood Request submitted successfully! Our AI agent is processing matching donors.")
+        return redirect('dashboard')
 
     return render(request, 'request_blood.html', {'blood_groups': blood_groups})
 

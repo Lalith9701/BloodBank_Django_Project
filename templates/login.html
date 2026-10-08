@@ -15,6 +15,16 @@
             </div>
             
             <div class="card-body p-4 p-sm-5 pt-2">
+                {% if request.GET.next and 'request-blood' in request.GET.next %}
+                <div class="alert alert-danger border-0 shadow-sm p-3 mb-4 rounded-3 d-flex align-items-center bg-danger bg-opacity-10 text-danger">
+                    <i class="bi bi-shield-lock-fill fs-3 me-3 text-danger"></i>
+                    <div>
+                        <strong class="d-block text-dark">Authentication Required</strong>
+                        Please log in to your account (or register as a new donor) to submit an Emergency Blood Request.
+                    </div>
+                </div>
+                {% endif %}
+
                 {% if error %}
                     <div class="alert alert-danger d-flex align-items-center py-2 shadow-sm premium-card border-0" role="alert">
                         <i class="bi bi-exclamation-triangle-fill flex-shrink-0 me-3 text-danger fs-5"></i>
