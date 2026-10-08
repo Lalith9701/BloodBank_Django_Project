@@ -53,8 +53,60 @@
     {% endif %}
 </div>
 
+{% if donor %}
+<!-- LIFE DROP Reward System Banner Card -->
+<div class="life-drop-card p-4 mb-4 shadow-sm">
+    <div class="row align-items-center">
+        <div class="col-lg-8">
+            <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                <span class="badge bg-danger rounded-pill px-3 py-2 fw-bold d-inline-flex align-items-center gap-1">
+                    <i class="bi bi-droplet-fill"></i> LIFE DROP
+                </span>
+                <span class="reward-tier-badge {% if donor.reward_info.level_name == 'Life Champion' %}reward-tier-champion{% elif donor.reward_info.level_name == 'Life Hero' %}reward-tier-hero{% elif donor.reward_info.level_name == 'Life Guardian' %}reward-tier-guardian{% else %}reward-tier-saver{% endif %}">
+                    <i class="bi {{ donor.reward_info.level_icon }}"></i> {{ donor.reward_info.level_name }}
+                </span>
+                {% if donor.reward_info.family_support_eligible %}
+                    <span class="badge bg-success-subtle text-success border border-success rounded-pill px-3 py-1">
+                        <i class="bi bi-shield-check me-1"></i> Family Priority Eligible
+                    </span>
+                {% endif %}
+            </div>
+            <h4 class="fw-bold text-dark mb-1">
+                You have <span class="text-danger">{{ donor.reward_info.points }} Life Points</span>
+            </h4>
+            <p class="text-muted small mb-2">
+                Total <strong>{{ donor.reward_info.total_donations }} completed donation(s)</strong> ({{ donor.reward_info.total_units }} blood units).
+                {% if donor.reward_info.next_level_name %}
+                    Need <strong>{{ donor.reward_info.points_needed }} more Pts</strong> to reach <strong>{{ donor.reward_info.next_level_name }}</strong>.
+                {% else %}
+                    🎉 You have achieved the highest rank: <strong>Life Champion Legend</strong>!
+                {% endif %}
+            </p>
+            <div class="progress progress-life-drop mb-0" style="max-width: 500px; height: 10px;">
+                <div class="progress-bar progress-life-bar" role="progressbar" style="width: {{ donor.reward_info.progress_percent }}%;"></div>
+            </div>
+        </div>
+        <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+            <a href="{% url 'donor_rewards' %}" class="btn btn-danger rounded-pill px-4 py-2 fw-bold shadow-sm">
+                <i class="bi bi-trophy-fill me-1"></i> LIFE DROP Portal
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <div class="row justify-content-center g-4 mb-5">
-    <div class="col-md-6 col-xl-3">
+    <div class="col-md-6 col-lg-4 col-xl-2-4">
+        <a href="{% url 'donor_rewards' %}" class="dash-card h-100 border-danger border-opacity-50">
+            <div class="icon-wrapper bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 shadow-sm">
+                <i class="bi bi-trophy-fill"></i>
+            </div>
+            <h4>LIFE DROP Rewards</h4>
+            <p>Track Life Points, level ranks, achievements, and family support pass.</p>
+        </a>
+    </div>
+
+    <div class="col-md-6 col-lg-4 col-xl-2-4">
         <a href="{% url 'add_donation' %}" class="dash-card h-100">
             <div class="icon-wrapper bg-white border border-light shadow-sm">
                 <i class="bi bi-heart-pulse-fill"></i>
@@ -64,7 +116,7 @@
         </a>
     </div>
 
-    <div class="col-md-6 col-xl-3">
+    <div class="col-md-6 col-lg-4 col-xl-2-4">
         <a href="{% url 'my_donations' %}" class="dash-card h-100">
             <div class="icon-wrapper bg-white border border-light shadow-sm">
                 <i class="bi bi-clock-history"></i>
@@ -74,7 +126,7 @@
         </a>
     </div>
 
-    <div class="col-md-6 col-xl-3">
+    <div class="col-md-6 col-lg-4 col-xl-2-4">
         <a href="{% url 'request_blood' %}" class="dash-card h-100">
             <div class="icon-wrapper bg-white border border-light shadow-sm">
                 <i class="bi bi-hospital"></i>
@@ -84,7 +136,7 @@
         </a>
     </div>
 
-    <div class="col-md-6 col-xl-3">
+    <div class="col-md-6 col-lg-4 col-xl-2-4">
         <a href="{% url 'my_requests' %}" class="dash-card h-100">
             <div class="icon-wrapper bg-white border border-light shadow-sm">
                 <i class="bi bi-file-earmark-medical"></i>

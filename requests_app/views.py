@@ -5,16 +5,17 @@ from django.utils import timezone
 from django.http import HttpResponse
 import csv
 
+from datetime import datetime, timedelta
 from inventory.models import BloodGroup, BloodStock
 from donors.models import Donor
 from notifications.models import Notification
 from accounts.models import AuditLog
 from agents.services.emergency_agent import run_emergency_dispatch_agent
-from .models import Donation, BloodRequest
+from .models import Donation, BloodRequest, DonationAppointment
 
 
 # ===================================
-# ADD DONATION
+# ADD DONATION / SCHEDULE APPOINTMENT
 # ===================================
 @login_required
 def add_donation(request):
@@ -28,65 +29,152 @@ def add_donation(request):
         messages.error(request, "Donor profile not found.")
         return redirect('dashboard')
 
+    # Calculate cool-down metrics
+    cooldown_days = donor.cooldown_days
+    last_donation = Donation.objects.filter(donor=donor).order_by('-donation_date').first()
+    today = timezone.now().date()
+
+    if last_donation:
+        days_since_last = (today - last_donation.donation_date.date()).days
+        next_eligible_date = last_donation.donation_date.date() + timedelta(days=cooldown_days)
+    else:
+        days_since_last = None
+        next_eligible_date = today
+
+    is_cooling = next_eligible_date > today
+    days_remaining = (next_eligible_date - today).days if is_cooling else 0
+    next_eligible_date_iso = next_eligible_date.strftime('%Y-%m-%d')
+
     if request.method == 'POST':
         units = request.POST.get('units')
+        scheduled_date_str = request.POST.get('scheduled_date')
+        time_slot = request.POST.get('time_slot', '09:00 AM - 11:00 AM')
 
         if not units:
             return render(request, 'add_donation.html', {
                 'blood_groups': blood_groups, 'donor': donor,
+                'last_donation': last_donation, 'cooldown_days': cooldown_days,
+                'next_eligible_date': next_eligible_date,
+                'next_eligible_date_iso': next_eligible_date_iso,
+                'days_remaining': days_remaining, 'days_since_last': days_since_last,
+                'is_cooling': is_cooling,
                 'error': 'Please enter the number of units.'
             })
 
         if donor.eligibility_status == 'PENDING':
             return render(request, 'add_donation.html', {
                 'blood_groups': blood_groups, 'donor': donor,
+                'last_donation': last_donation, 'cooldown_days': cooldown_days,
+                'next_eligible_date': next_eligible_date,
+                'next_eligible_date_iso': next_eligible_date_iso,
+                'days_remaining': days_remaining, 'days_since_last': days_since_last,
+                'is_cooling': is_cooling,
                 'error': 'Your donation cannot be processed. Your health status requires Admin approval.'
             })
         elif donor.eligibility_status == 'REJECTED':
             return render(request, 'add_donation.html', {
                 'blood_groups': blood_groups, 'donor': donor,
+                'last_donation': last_donation, 'cooldown_days': cooldown_days,
+                'next_eligible_date': next_eligible_date,
+                'next_eligible_date_iso': next_eligible_date_iso,
+                'days_remaining': days_remaining, 'days_since_last': days_since_last,
+                'is_cooling': is_cooling,
                 'error': 'Your donation cannot be processed because your health status was rejected by an Admin.'
             })
 
-        # Gender-based cooling period check (90 days for men, 120 days for women)
-        cooldown = donor.cooldown_days
-        last_donation = Donation.objects.filter(donor=donor).order_by('-donation_date').first()
-        if last_donation:
-            days_since = (timezone.now() - last_donation.donation_date).days
-            if days_since < cooldown:
-                return render(request, 'add_donation.html', {
-                    'blood_groups': blood_groups, 'donor': donor,
-                    'error': (
-                        f'You must wait {cooldown} days between donations ({donor.gender} cooling period). '
-                        f'Your last donation was {days_since} days ago. '
-                        f'Please wait {cooldown - days_since} more days.'
-                    )
-                })
+        # Validate scheduled date against cool-down policy
+        if scheduled_date_str:
+            try:
+                scheduled_date = datetime.strptime(scheduled_date_str, '%Y-%m-%d').date()
+            except ValueError:
+                scheduled_date = next_eligible_date
+        else:
+            scheduled_date = next_eligible_date
 
-        Donation.objects.create(
-            donor=donor,
-            blood_group=donor.blood_group,
-            units=int(units)
-        )
+        if scheduled_date < next_eligible_date:
+            return render(request, 'add_donation.html', {
+                'blood_groups': blood_groups, 'donor': donor,
+                'last_donation': last_donation, 'cooldown_days': cooldown_days,
+                'next_eligible_date': next_eligible_date,
+                'next_eligible_date_iso': next_eligible_date_iso,
+                'days_remaining': days_remaining, 'days_since_last': days_since_last,
+                'is_cooling': is_cooling,
+                'error': (
+                    f'Invalid Appointment Date: Your medical cool-down period requires you to wait until '
+                    f'{next_eligible_date.strftime("%B %d, %Y")} before your next donation.'
+                )
+            })
 
-        donor.availability = False
-        donor.save()
+        units_int = int(units)
 
-        Notification.objects.create(
-            user=request.user,
-            title="Donation Recorded",
-            message=(
-                f"Thank you! Your donation of {units} units has been recorded. "
-                f"Your availability has been set to Offline for recovery."
-            ),
-            notif_type="success"
-        )
+        if scheduled_date <= today:
+            # Direct donation today
+            Donation.objects.create(
+                donor=donor,
+                blood_group=donor.blood_group,
+                units=units_int
+            )
 
-        return redirect('my_donations')
+            points_earned = units_int * 100
+            donor.life_points += points_earned
+            donor.availability = False
+            donor.save()
+
+            r_info = donor.reward_info
+
+            Notification.objects.create(
+                user=request.user,
+                title="🩸 Donation Recorded & LIFE Points Earned!",
+                message=(
+                    f"Thank you! Your donation of {units_int} unit(s) has been recorded. "
+                    f"You earned +{points_earned} LIFE Points! "
+                    f"Your total balance is {r_info['points']} Points (Level: {r_info['level_name']})."
+                ),
+                notif_type="success"
+            )
+
+            messages.success(
+                request,
+                f"Thank you for donating blood! You earned +{points_earned} LIFE Points! Level: {r_info['level_name']}"
+            )
+            return redirect('my_donations')
+        else:
+            # Future appointment scheduled
+            appointment = DonationAppointment.objects.create(
+                donor=donor,
+                blood_group=donor.blood_group,
+                units=units_int,
+                scheduled_date=scheduled_date,
+                time_slot=time_slot,
+                status='SCHEDULED'
+            )
+
+            Notification.objects.create(
+                user=request.user,
+                title="📅 Donation Appointment Scheduled!",
+                message=(
+                    f"Your donation appointment is confirmed for {scheduled_date.strftime('%B %d, %Y')} "
+                    f"({time_slot}). Thank you for planning ahead!"
+                ),
+                notif_type="info"
+            )
+
+            messages.success(
+                request,
+                f"🎉 Donation appointment successfully scheduled for {scheduled_date.strftime('%B %d, %Y')} ({time_slot})!"
+            )
+            return redirect('my_donations')
 
     return render(request, 'add_donation.html', {
         'blood_groups': blood_groups,
-        'donor': donor
+        'donor': donor,
+        'last_donation': last_donation,
+        'cooldown_days': cooldown_days,
+        'next_eligible_date': next_eligible_date,
+        'next_eligible_date_iso': next_eligible_date_iso,
+        'days_remaining': days_remaining,
+        'days_since_last': days_since_last,
+        'is_cooling': is_cooling,
     })
 
 
@@ -103,8 +191,14 @@ def my_donations(request):
         messages.error(request, "Donor profile not found.")
         return redirect('dashboard')
 
-    donations = Donation.objects.filter(donor=donor)
-    return render(request, 'my_donations.html', {'donations': donations})
+    donations = Donation.objects.filter(donor=donor).order_by('-donation_date')
+    appointments = DonationAppointment.objects.filter(donor=donor, status='SCHEDULED').order_by('scheduled_date')
+
+    return render(request, 'my_donations.html', {
+        'donor': donor,
+        'donations': donations,
+        'appointments': appointments
+    })
 
 
 # ===================================

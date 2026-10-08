@@ -59,7 +59,7 @@ def validate_strong_password(password: str) -> list[str]:
 
 
 # ============================================================
-# LOGIN  — supports phone number OR full name
+# LOGIN  — supports username, phone number, email, OR full name
 # ============================================================
 def login_view(request):
     if request.method == 'POST':
@@ -77,20 +77,22 @@ def login_view(request):
                 'error': 'Your account has been deactivated. Contact the administrator.',
                 'deactivated': True,
                 'deactivated_name': raw_user.get_full_name() or raw_user.username,
-                'deactivated_phone': raw_user.username,
+                'deactivated_phone': getattr(raw_user, 'phone', '') or raw_user.username,
             })
 
-        # ── Step 1: try phone number (username) directly ──
-        # Check deactivation BEFORE authenticate() so we show the right message
-        try:
-            raw_by_phone = User.objects.get(username=login_id)
-            if raw_by_phone.check_password(password):
-                if not raw_by_phone.is_active:
-                    return deactivated_response(raw_by_phone)
-        except User.DoesNotExist:
-            raw_by_phone = None
+        # ── Step 1: try lookup by username, phone (User/Donor), or email ──
+        user_candidate = User.objects.filter(
+            Q(username__iexact=login_id) |
+            Q(phone=login_id) |
+            Q(donor_profile__phone=login_id) |
+            Q(email__iexact=login_id)
+        ).distinct().first()
 
-        user = authenticate(request, username=login_id, password=password)
+        user = None
+        if user_candidate and user_candidate.check_password(password):
+            if not user_candidate.is_active:
+                return deactivated_response(user_candidate)
+            user = user_candidate
 
         # ── Step 2: try full name lookup ──────────────────
         if not user:
@@ -107,13 +109,10 @@ def login_view(request):
 
             for candidate in candidates:
                 if candidate.check_password(password):
-                    # Found the right user by full name — check deactivation first
                     if not candidate.is_active:
                         return deactivated_response(candidate)
-                    result = authenticate(request, username=candidate.username, password=password)
-                    if result:
-                        user = result
-                        break
+                    user = candidate
+                    break
 
         # ── Step 3: handle result ─────────────────────────
         if user:
@@ -125,7 +124,7 @@ def login_view(request):
             return redirect(next_url if next_url else 'dashboard')
 
         return render(request, 'login.html', {
-            'error': 'Invalid credentials. Use your phone number or full name.'
+            'error': 'Invalid credentials. Use your username, phone number, email, or full name.'
         })
 
     return render(request, 'login.html')

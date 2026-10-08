@@ -11,6 +11,7 @@ class User(AbstractUser):
     )
     role       = models.CharField(max_length=20, choices=ROLE_CHOICES)
     email      = models.EmailField(unique=True, blank=True, default='')
+    phone      = models.CharField(max_length=20, blank=True, default='')
     is_active  = models.BooleanField(default=True)   # used for account deactivation
 
     def __str__(self):

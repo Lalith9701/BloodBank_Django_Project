@@ -14,7 +14,7 @@
     <!-- Google Fonts — Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}?v=1.1">
     
     {% block extra_head %}{% endblock %}
 </head>
@@ -70,6 +70,9 @@
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3 mt-2" aria-labelledby="userDropdown">
                                 <li><a class="dropdown-item py-2" href="{% url 'dashboard' %}"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a></li>
+                                {% if request.user.role == 'DONOR' %}
+                                <li><a class="dropdown-item py-2 fw-bold text-danger" href="{% url 'donor_rewards' %}"><i class="bi bi-trophy-fill me-2"></i> LIFE DROP Rewards</a></li>
+                                {% endif %}
                                 {% if request.user.is_staff %}
                                 <li><a class="dropdown-item py-2" href="{% url 'agent_dashboard' %}"><i class="bi bi-robot me-2 text-danger"></i> AI Emergency Agent</a></li>
                                 {% endif %}

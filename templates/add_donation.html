@@ -1,79 +1,256 @@
 {% extends 'base.html' %}
-{% block title %}Make a Donation | Blood Bank{% endblock %}
+{% block title %}Schedule Blood Donation | Blood Bank{% endblock %}
+
+{% block extra_head %}
+<!-- Flatpickr CSS for interactive date calendar picker -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+    .cooldown-alert-box {
+        border-radius: 16px;
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(249, 115, 22, 0.1) 100%);
+        border: 1px solid rgba(239, 68, 68, 0.25);
+    }
+    .eligible-alert-box {
+        border-radius: 16px;
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(5, 150, 105, 0.12) 100%);
+        border: 1px solid rgba(16, 185, 129, 0.25);
+    }
+    .time-slot-pill {
+        cursor: pointer;
+        border: 2px solid var(--border-color);
+        border-radius: 12px;
+        padding: 0.6rem 1rem;
+        transition: all 0.25s ease;
+        text-align: center;
+        background: var(--card-bg);
+    }
+    .time-slot-pill:hover {
+        border-color: var(--primary);
+        background: var(--primary-light);
+    }
+    .btn-check:checked + .time-slot-pill {
+        border-color: var(--primary);
+        background-color: var(--primary-light);
+        color: var(--primary);
+        font-weight: 700;
+        box-shadow: 0 4px 12px rgba(220, 38, 38, 0.15);
+    }
+    .flatpickr-day.disabled, .flatpickr-day.disabled:hover {
+        color: #cbd5e1 !important;
+        background: #f1f5f9 !important;
+        text-decoration: line-through;
+        cursor: not-allowed;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center align-items-center py-4">
-    <div class="col-12 col-md-8 col-lg-6">
-        <div class="premium-card">
+<div class="row justify-content-center py-4">
+    <div class="col-12 col-lg-8 col-xl-7">
+        <div class="premium-card border-0 shadow-lg rounded-4 overflow-hidden">
             
-            <div class="premium-card-header flex-column text-center pb-2 border-0" style="background: transparent;">
+            <!-- Header Header -->
+            <div class="premium-card-header flex-column text-center pb-3 border-0 pt-4" style="background: transparent;">
                 <div class="icon-circle mb-3 border border-2 shadow-sm" style="width: 75px; height: 75px; border-radius: 50%; background-color: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 2.2rem; margin: 0 auto; border-color: white !important;">
-                    <i class="bi bi-heart-pulse-fill"></i>
+                    <i class="bi bi-calendar2-heart-fill"></i>
                 </div>
-                <h3 class="fw-bold mb-0" style="color: var(--secondary);">Make a Donation</h3>
-                <p class="text-muted small mt-2">Log your generous blood donation today.</p>
+                <h3 class="fw-bold mb-1" style="color: var(--secondary);">Schedule Your Blood Donation</h3>
+                <p class="text-muted small mb-0">Book your next voluntary blood donation based on medical safety cool-down guidelines.</p>
             </div>
             
             <div class="card-body p-4 p-sm-5 pt-2">
                 {% if error %}
-                <div class="alert alert-danger shadow-sm border-0 d-flex align-items-center mb-4" role="alert">
-                    <i class="bi bi-exclamation-triangle-fill fs-4 me-3"></i>
+                <div class="alert alert-danger shadow-sm border-0 d-flex align-items-center mb-4 rounded-3" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill fs-4 me-3 text-danger"></i>
                     <div>{{ error }}</div>
                 </div>
                 {% endif %}
 
                 {% if donor.eligibility_status == 'PENDING' %}
-                <div class="alert alert-warning shadow-sm border-0 d-flex align-items-center mb-4" role="alert">
+                <div class="alert alert-warning shadow-sm border-0 d-flex align-items-center mb-4 rounded-3" role="alert">
                     <i class="bi bi-hourglass-split fs-4 me-3 text-warning"></i>
-                    <div>You cannot make a donation at this time. Your health status is currently pending Admin approval.</div>
+                    <div>You cannot schedule a donation at this time. Your health status is currently pending Admin approval.</div>
                 </div>
                 <div class="d-grid mt-4">
-                    <a href="{% url 'dashboard' %}" class="btn btn-secondary-custom btn-lg text-center">
+                    <a href="{% url 'dashboard' %}" class="btn btn-secondary-custom btn-lg text-center rounded-pill">
                         <i class="bi bi-house-door me-2"></i> Back to Dashboard
                     </a>
                 </div>
                 {% elif donor.eligibility_status == 'REJECTED' %}
-                <div class="alert alert-danger shadow-sm border-0 d-flex align-items-center mb-4" role="alert">
+                <div class="alert alert-danger shadow-sm border-0 d-flex align-items-center mb-4 rounded-3" role="alert">
                     <i class="bi bi-x-circle-fill fs-4 me-3 text-danger"></i>
-                    <div>You cannot make a donation. Your health status was rejected by an Admin.</div>
+                    <div>You cannot schedule a donation. Your health profile was rejected by an Admin.</div>
                 </div>
                 <div class="d-grid mt-4">
-                    <a href="{% url 'dashboard' %}" class="btn btn-secondary-custom btn-lg text-center">
+                    <a href="{% url 'dashboard' %}" class="btn btn-secondary-custom btn-lg text-center rounded-pill">
                         <i class="bi bi-house-door me-2"></i> Back to Dashboard
                     </a>
                 </div>
                 {% else %}
-                <form method="post">
-                    {% csrf_token %}
-                    
-                    <div class="mb-4">
-                        <label class="form-label text-muted fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Your Blood Group</label>
-                        <div class="input-group shadow-sm" style="border-radius: 8px; overflow: hidden;">
-                            <span class="input-group-text border-0 bg-light text-danger"><i class="bi bi-droplet-fill"></i></span>
-                            <div class="form-control border-0 ps-2 bg-light d-flex align-items-center fw-bold" style="color: var(--secondary);">
-                                {{ donor.blood_group.blood_group }}
+
+                <!-- Section A: Cool-Down Status & Live Countdown Card -->
+                {% if is_cooling %}
+                <div class="cooldown-alert-box p-4 mb-4">
+                    <div class="d-flex align-items-start gap-3">
+                        <div class="p-3 bg-danger bg-opacity-10 text-danger rounded-circle d-flex align-items-center justify-content-center" style="width: 54px; height: 54px; min-width: 54px;">
+                            <i class="bi bi-shield-lock-fill fs-3"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center mb-2 gap-2">
+                                <h5 class="fw-bold text-dark mb-0"><i class="bi bi-clock-history me-1 text-danger"></i> Cool-Down Period Active</h5>
+                                <span class="badge bg-danger text-white rounded-pill px-3 py-2 small fw-bold shadow-sm">
+                                    ⏳ {{ days_remaining }} Days Remaining
+                                </span>
+                            </div>
+                            <p class="text-secondary small mb-3">
+                                To ensure your health and iron recovery, a mandatory <strong>{{ cooldown_days }}-day cooling period</strong> applies for {{ donor.gender }} donors between blood donations.
+                            </p>
+                            <div class="row g-2 p-3 bg-white bg-opacity-75 rounded-3 border border-danger border-opacity-20 text-center">
+                                <div class="col-6 col-md-4">
+                                    <div class="text-muted small">Last Donation</div>
+                                    <div class="fw-bold text-dark">{{ last_donation.donation_date|date:"N j, Y" }}</div>
+                                </div>
+                                <div class="col-6 col-md-4">
+                                    <div class="text-muted small">Cool-Down Requirement</div>
+                                    <div class="fw-bold text-dark">{{ cooldown_days }} Days ({{ donor.gender }})</div>
+                                </div>
+                                <div class="col-12 col-md-4 mt-2 mt-md-0">
+                                    <div class="text-muted small">Next Eligible Date</div>
+                                    <div class="fw-bold text-danger fs-6"><i class="bi bi-calendar-check me-1"></i> {{ next_eligible_date|date:"N j, Y" }}</div>
+                                </div>
+                            </div>
+                            <div class="mt-3 text-muted small">
+                                <i class="bi bi-info-circle-fill me-1 text-primary"></i>
+                                <strong>Good news!</strong> You can reserve your appointment slot right now for <strong>{{ next_eligible_date|date:"N j, Y" }}</strong> or any date after!
                             </div>
                         </div>
-                        <div class="form-text small mt-1">This is your registered blood group.</div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="eligible-alert-box p-4 mb-4">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="p-3 bg-success bg-opacity-10 text-success rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; min-width: 50px;">
+                            <i class="bi bi-check-circle-fill fs-3"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold text-success mb-1">Fully Rested & Eligible to Donate Today!</h5>
+                            <p class="text-muted small mb-0">
+                                You have completed your rest period. You can choose to donate <strong>today</strong> or schedule an appointment for a convenient future date.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Section B & C: Appointment Booking Form with Smart Calendar -->
+                <form method="post" id="donationForm">
+                    {% csrf_token %}
+                    
+                    <div class="row g-3 mb-4">
+                        <!-- Blood Group Read-only Field -->
+                        <div class="col-md-6">
+                            <label class="form-label text-muted fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Registered Blood Group</label>
+                            <div class="input-group shadow-sm rounded-3 overflow-hidden">
+                                <span class="input-group-text border-0 bg-light text-danger"><i class="bi bi-droplet-fill fs-5"></i></span>
+                                <div class="form-control border-0 ps-2 bg-light d-flex align-items-center fw-bold text-dark fs-5">
+                                    {{ donor.blood_group.blood_group }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Units Donated Field -->
+                        <div class="col-md-6">
+                            <label for="units" class="form-label text-muted fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Blood Units (Bags)</label>
+                            <div class="input-group shadow-sm rounded-3 overflow-hidden">
+                                <span class="input-group-text border-0 bg-light text-muted"><i class="bi bi-balloon-heart fs-5"></i></span>
+                                <input type="number" class="form-control border-0 ps-2 bg-light fw-bold text-dark" id="units" name="units" placeholder="e.g., 1" min="1" max="4" value="1" required>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="mb-5">
-                        <label for="units" class="form-label text-muted fw-semibold small text-uppercase" style="letter-spacing: 0.5px;">Units Donated</label>
-                        <div class="input-group shadow-sm" style="border-radius: 8px; overflow: hidden;">
-                            <span class="input-group-text border-0 bg-light text-muted"><i class="bi bi-balloon-heart"></i></span>
-                            <input type="number" class="form-control border-0 ps-2 bg-light" id="units" name="units" placeholder="e.g., 1" min="1" required>
+                    <!-- Section B: Smart Cool-Down Calendar Date Picker -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label for="scheduled_date" class="form-label text-muted fw-semibold small text-uppercase mb-0" style="letter-spacing: 0.5px;">
+                                Select Donation Date (Calendar)
+                            </label>
+                            <span class="badge bg-secondary-subtle text-secondary rounded-pill px-2 py-1 small">
+                                Min Date: {{ next_eligible_date|date:"N j, Y" }}
+                            </span>
                         </div>
-                        <div class="form-text small mt-1">Please enter the number of units donated.</div>
-                        <div class="form-text small mt-1 text-muted">
-                            <i class="bi bi-shield-check text-success me-1"></i>Required cooling period: <strong>90 days</strong> (Men) / <strong>120 days</strong> (Women). Your cooling period: <strong>{{ donor.cooldown_days }} days</strong>.
+                        
+                        <div class="input-group shadow-sm rounded-3 overflow-hidden mb-2" id="datePickerGroup" style="cursor: pointer;">
+                            <span class="input-group-text border-0 bg-light text-danger" id="calendarIconBtn" style="cursor: pointer;"><i class="bi bi-calendar3 fs-5"></i></span>
+                            <input type="text" class="form-control border-0 ps-2 bg-light fw-bold text-dark fs-6" id="scheduled_date" name="scheduled_date" value="{{ next_eligible_date_iso }}" min="{{ next_eligible_date_iso }}" required readonly placeholder="Pick a date on or after {{ next_eligible_date|date:'Y-m-d' }}" style="cursor: pointer;">
+                        </div>
+                        <div class="form-text small text-muted">
+                            <i class="bi bi-lock-fill text-warning me-1"></i>Dates prior to <strong>{{ next_eligible_date|date:"N j, Y" }}</strong> are locked due to the medical cool-down policy.
+                        </div>
+
+                        <!-- Quick Date Preset Buttons -->
+                        <div class="d-flex flex-wrap gap-2 mt-2">
+                            <button type="button" class="btn btn-sm btn-outline-danger rounded-pill" onclick="setPresetDate('{{ next_eligible_date_iso }}')">
+                                <i class="bi bi-star-fill me-1"></i> Next Eligible Date ({{ next_eligible_date|date:"M j" }})
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill" onclick="addDaysToDate(7)">
+                                +1 Week
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill" onclick="addDaysToDate(14)">
+                                +2 Weeks
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill" onclick="addDaysToDate(30)">
+                                +1 Month
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Section C: Preferred Time Slot Selector -->
+                    <div class="mb-5">
+                        <label class="form-label text-muted fw-semibold small text-uppercase mb-2" style="letter-spacing: 0.5px;">
+                            Preferred Time Slot
+                        </label>
+                        <div class="row g-2">
+                            <div class="col-6 col-md-3">
+                                <input type="radio" class="btn-check" name="time_slot" id="slot1" value="09:00 AM - 11:00 AM" checked>
+                                <label class="time-slot-pill w-100" for="slot1">
+                                    <i class="bi bi-sun-fill text-warning d-block fs-5 mb-1"></i>
+                                    <div class="small fw-bold">Morning</div>
+                                    <div class="text-muted" style="font-size: 0.75rem;">09:00 - 11:00 AM</div>
+                                </label>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <input type="radio" class="btn-check" name="time_slot" id="slot2" value="11:00 AM - 01:00 PM">
+                                <label class="time-slot-pill w-100" for="slot2">
+                                    <i class="bi bi-brightness-high-fill text-warning d-block fs-5 mb-1"></i>
+                                    <div class="small fw-bold">Mid-day</div>
+                                    <div class="text-muted" style="font-size: 0.75rem;">11:00 - 01:00 PM</div>
+                                </label>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <input type="radio" class="btn-check" name="time_slot" id="slot3" value="02:00 PM - 04:00 PM">
+                                <label class="time-slot-pill w-100" for="slot3">
+                                    <i class="bi bi-sunset-fill text-primary d-block fs-5 mb-1"></i>
+                                    <div class="small fw-bold">Afternoon</div>
+                                    <div class="text-muted" style="font-size: 0.75rem;">02:00 - 04:00 PM</div>
+                                </label>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <input type="radio" class="btn-check" name="time_slot" id="slot4" value="04:00 PM - 06:00 PM">
+                                <label class="time-slot-pill w-100" for="slot4">
+                                    <i class="bi bi-moon-stars-fill text-indigo d-block fs-5 mb-1"></i>
+                                    <div class="small fw-bold">Evening</div>
+                                    <div class="text-muted" style="font-size: 0.75rem;">04:00 - 06:00 PM</div>
+                                </label>
+                            </div>
                         </div>
                     </div>
                     
+                    <!-- Action Submit Buttons -->
                     <div class="d-grid gap-3">
-                        <button type="submit" class="btn btn-primary-custom btn-lg shadow-hover">
-                            <i class="bi bi-heart-fill me-2"></i> Donate Now
+                        <button type="submit" class="btn btn-danger btn-lg rounded-pill fw-bold shadow-sm py-3" id="submitBtn">
+                            <i class="bi bi-calendar-check-fill me-2"></i> Confirm & Schedule Appointment
                         </button>
-                        <a href="{% url 'dashboard' %}" class="btn btn-secondary-custom btn-lg text-center">
+                        <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary btn-lg rounded-pill text-center">
                             <i class="bi bi-house-door me-2"></i> Back to Dashboard
                         </a>
                     </div>
@@ -83,4 +260,82 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Flatpickr JS library & Material Red Theme -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_red.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<style>
+    .flatpickr-calendar {
+        border-radius: 16px !important;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2) !important;
+        border: 1px solid rgba(220, 38, 38, 0.2) !important;
+        font-family: inherit !important;
+        margin-top: 8px !important;
+    }
+    .flatpickr-day.selected, .flatpickr-day.selected:hover {
+        background: var(--primary, #dc2626) !important;
+        border-color: var(--primary, #dc2626) !important;
+    }
+</style>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const minDateIso = "{{ next_eligible_date_iso }}";
+    const dateInput = document.getElementById("scheduled_date");
+    const calendarIconBtn = document.getElementById("calendarIconBtn");
+    const datePickerGroup = document.getElementById("datePickerGroup");
+    const submitBtn = document.getElementById("submitBtn");
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    // Initialize Flatpickr calendar with minDate constraint
+    const picker = flatpickr("#scheduled_date", {
+        dateFormat: "Y-m-d",
+        minDate: minDateIso,
+        defaultDate: minDateIso,
+        clickOpens: true,
+        disableMobile: false,
+        onChange: function(selectedDates, dateStr, instance) {
+            updateButtonText(dateStr);
+        }
+    });
+
+    // Make clicking the calendar icon or input box open the calendar popup
+    if (calendarIconBtn) {
+        calendarIconBtn.addEventListener("click", function(e) {
+            e.stopPropagation();
+            picker.open();
+        });
+    }
+    if (datePickerGroup) {
+        datePickerGroup.addEventListener("click", function(e) {
+            picker.open();
+        });
+    }
+
+    function updateButtonText(selectedStr) {
+        if (!submitBtn) return;
+        if (selectedStr === todayStr) {
+            submitBtn.innerHTML = `<i class="bi bi-heart-fill me-2"></i> Donate Blood Today`;
+            submitBtn.className = "btn btn-danger btn-lg rounded-pill fw-bold shadow-sm py-3";
+        } else {
+            submitBtn.innerHTML = `<i class="bi bi-calendar-check-fill me-2"></i> Confirm Appointment for ${selectedStr}`;
+            submitBtn.className = "btn btn-primary btn-lg rounded-pill fw-bold shadow-sm py-3";
+        }
+    }
+
+    updateButtonText(minDateIso);
+
+    window.setPresetDate = function(dateIso) {
+        picker.setDate(dateIso, true);
+    };
+
+    window.addDaysToDate = function(days) {
+        let baseDate = new Date(minDateIso);
+        baseDate.setDate(baseDate.getDate() + days);
+        let isoStr = baseDate.toISOString().split('T')[0];
+        picker.setDate(isoStr, true);
+    };
+});
+</script>
 {% endblock %}

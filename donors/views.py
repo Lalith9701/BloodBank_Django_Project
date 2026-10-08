@@ -1,4 +1,6 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from django.db.models import Q
 from .models import Donor
 from inventory.models import BloodGroup
@@ -27,3 +29,45 @@ def donor_search(request):
             'pincode': pincode
         }
     })
+
+
+@login_required
+def donor_rewards(request):
+    if request.user.role != 'DONOR':
+        messages.info(request, "The LIFE DROP Reward System is designed for registered blood donors.")
+        return redirect('dashboard')
+
+    try:
+        donor = Donor.objects.get(user=request.user)
+    except Donor.DoesNotExist:
+        messages.error(request, "Donor profile not found.")
+        return redirect('dashboard')
+
+    donations = list(donor.donation_set.order_by('-donation_date'))
+    reward_info = donor.reward_info
+    achievements = donor.achievements
+
+    return render(request, 'donor_rewards.html', {
+        'donor': donor,
+        'reward_info': reward_info,
+        'achievements': achievements,
+        'donations': donations,
+    })
+
+
+@login_required
+def donor_family_certificate(request):
+    if request.user.role != 'DONOR':
+        return redirect('dashboard')
+
+    try:
+        donor = Donor.objects.get(user=request.user)
+    except Donor.DoesNotExist:
+        messages.error(request, "Donor profile not found.")
+        return redirect('dashboard')
+
+    return render(request, 'family_certificate.html', {
+        'donor': donor,
+        'reward_info': donor.reward_info,
+    })
+

@@ -1,0 +1,266 @@
+{% extends 'base.html' %}
+{% block title %}LIFE DROP Rewards & Recognition Portal | Blood Bank{% endblock %}
+
+{% block content %}
+<div class="container py-2">
+    <!-- Header Banner -->
+    <div class="life-drop-hero-banner mb-4 text-white" style="background: linear-gradient(135deg, #1e1b4b 0%, #311b92 50%, #881337 100%) !important; color: #ffffff !important; border-radius: 16px; padding: 2.5rem 2rem; box-shadow: 0 10px 25px -5px rgba(49, 27, 146, 0.4); position: relative; overflow: hidden;">
+        <div class="row align-items-center position-relative" style="z-index: 2;">
+            <div class="col-lg-8">
+                <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill mb-3 text-white small fw-bold" style="background-color: rgba(255, 255, 255, 0.2);">
+                    <i class="bi bi-droplet-fill text-danger fs-5"></i> LIFE DROP DONOR REWARD SYSTEM
+                </div>
+                <h1 class="display-5 fw-bold mb-2 text-white" style="color: #ffffff !important;">Welcome, {{ request.user.get_full_name|default:request.user.username }}!</h1>
+                <p class="fs-5 opacity-90 mb-0 text-white" style="color: #f8fafc !important;">
+                    Your voluntary blood donations save lives. Collect <strong>Life Points</strong>, achieve prestigious donor ranks, and unlock verified donor-support benefits for you and your family.
+                </p>
+            </div>
+            <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                <div class="d-inline-block p-3 rounded-4 border border-white border-opacity-20 text-center" style="background-color: rgba(255, 255, 255, 0.15); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);">
+                    <div class="small text-uppercase tracking-wider mb-1 text-white" style="color: #e2e8f0 !important; font-weight: 600;">Current Reward Level</div>
+                    <div class="reward-tier-badge {% if reward_info.level_name == 'Life Champion' %}reward-tier-champion{% elif reward_info.level_name == 'Life Hero' %}reward-tier-hero{% elif reward_info.level_name == 'Life Guardian' %}reward-tier-guardian{% else %}reward-tier-saver{% endif %}">
+                        <i class="bi {{ reward_info.level_icon }}"></i> {{ reward_info.level_name }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats & Progress Overview Cards -->
+    <div class="row g-4 mb-4">
+        <!-- Life Points Card -->
+        <div class="col-md-6 col-lg-3">
+            <div class="premium-card p-4 h-100 position-relative overflow-hidden">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="text-muted fw-bold small text-uppercase">Life Points</span>
+                    <div class="icon-wrapper m-0 bg-danger bg-opacity-10 text-danger rounded-circle">
+                        <i class="bi bi-suit-heart-fill"></i>
+                    </div>
+                </div>
+                <h2 class="display-6 fw-bold text-danger mb-1">{{ reward_info.points }} <span class="fs-6 text-muted fw-normal">Pts</span></h2>
+                <p class="small text-muted mb-0">100 Pts earned per unit donated</p>
+            </div>
+        </div>
+
+        <!-- Total Donations Card -->
+        <div class="col-md-6 col-lg-3">
+            <div class="premium-card p-4 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="text-muted fw-bold small text-uppercase">Verified Donations</span>
+                    <div class="icon-wrapper m-0 bg-primary bg-opacity-10 text-primary rounded-circle">
+                        <i class="bi bi-droplet-half"></i>
+                    </div>
+                </div>
+                <h2 class="display-6 fw-bold text-primary mb-1">{{ reward_info.total_donations }} <span class="fs-6 text-muted fw-normal">Donations</span></h2>
+                <p class="small text-muted mb-0">Total {{ reward_info.total_units }} blood unit(s) contributed</p>
+            </div>
+        </div>
+
+        <!-- Family Support Eligibility Card -->
+        <div class="col-md-6 col-lg-3">
+            <div class="premium-card p-4 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="text-muted fw-bold small text-uppercase">Family Support Status</span>
+                    <div class="icon-wrapper m-0 bg-success bg-opacity-10 text-success rounded-circle">
+                        <i class="bi bi-shield-lock-fill"></i>
+                    </div>
+                </div>
+                {% if reward_info.family_support_eligible %}
+                    <h5 class="fw-bold text-success mb-1"><i class="bi bi-check-circle-fill me-1"></i> Priority Eligible</h5>
+                    <p class="small text-muted mb-0">Donor & family support benefits active</p>
+                {% else %}
+                    <h5 class="fw-bold text-warning mb-1"><i class="bi bi-clock-history me-1"></i> Complete 1st Donation</h5>
+                    <p class="small text-muted mb-0">Donate blood to unlock family priority</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Certificate Download Quick Action -->
+        <div class="col-md-6 col-lg-3">
+            <div class="premium-card p-4 h-100 d-flex flex-column justify-content-between bg-gradient">
+                <div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted fw-bold small text-uppercase">Donor Certificate</span>
+                        <i class="bi bi-award fs-4 text-warning"></i>
+                    </div>
+                    <div class="fw-bold text-dark mb-2">Family Support Pass</div>
+                </div>
+                <a href="{% url 'donor_family_certificate' %}" target="_blank" class="btn btn-outline-danger btn-sm rounded-pill w-100 fw-bold">
+                    <i class="bi bi-file-earmark-pdf me-1"></i> View Certificate
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress to Next Reward Level -->
+    <div class="premium-card p-4 mb-5 shadow-sm">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+            <div>
+                <h5 class="fw-bold mb-1"><i class="bi bi-graph-up-arrow me-2 text-danger"></i> Progress to Next Level</h5>
+                <p class="text-muted small mb-0">
+                    {% if reward_info.next_level_name %}
+                        Currently <strong>{{ reward_info.level_name }}</strong>. You need <strong>{{ reward_info.points_needed }} more Life Points</strong> to reach <strong>{{ reward_info.next_level_name }}</strong>!
+                    {% else %}
+                        🎉 Congratulations! You have achieved the highest rank: <strong>Life Champion Legend</strong>!
+                    {% endif %}
+                </p>
+            </div>
+            <div class="fw-bold fs-5 text-dark">
+                {{ reward_info.points }} / {{ reward_info.next_level_points }} Pts
+            </div>
+        </div>
+        <div class="progress progress-life-drop">
+            <div class="progress-bar progress-life-bar" role="progressbar" style="width: {{ reward_info.progress_percent }}%;" aria-valuenow="{{ reward_info.progress_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+
+        <!-- Levels Progression Bar -->
+        <div class="row text-center mt-4 g-2">
+            <div class="col-3">
+                <div class="p-2 rounded {% if reward_info.points >= 0 %}bg-light border-danger border{% else %}opacity-50{% endif %}">
+                    <i class="bi bi-heart-pulse-fill text-secondary d-block fs-4 mb-1"></i>
+                    <div class="fw-bold small text-dark">Life Saver</div>
+                    <div class="text-muted small">0 - 199 Pts</div>
+                </div>
+            </div>
+            <div class="col-3">
+                <div class="p-2 rounded {% if reward_info.points >= 200 %}bg-light border-info border{% else %}opacity-50{% endif %}">
+                    <i class="bi bi-shield-check text-info d-block fs-4 mb-1"></i>
+                    <div class="fw-bold small text-dark">Life Guardian</div>
+                    <div class="text-muted small">200 - 499 Pts</div>
+                </div>
+            </div>
+            <div class="col-3">
+                <div class="p-2 rounded {% if reward_info.points >= 500 %}bg-light border-primary border{% else %}opacity-50{% endif %}">
+                    <i class="bi bi-award-fill text-primary d-block fs-4 mb-1"></i>
+                    <div class="fw-bold small text-dark">Life Hero</div>
+                    <div class="text-muted small">500 - 999 Pts</div>
+                </div>
+            </div>
+            <div class="col-3">
+                <div class="p-2 rounded {% if reward_info.points >= 1000 %}bg-light border-warning border{% else %}opacity-50{% endif %}">
+                    <i class="bi bi-trophy-fill text-warning d-block fs-4 mb-1"></i>
+                    <div class="fw-bold small text-dark">Life Champion</div>
+                    <div class="text-muted small">1000+ Pts</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Achievements & Badges Grid -->
+    <div class="mb-5">
+        <h4 class="fw-bold mb-3"><i class="bi bi-patch-check-fill me-2 text-danger"></i> Donor Badges & Achievements</h4>
+        <div class="row g-3">
+            {% for ach in achievements %}
+            <div class="col-md-6 col-lg-4">
+                <div class="achievement-card {% if ach.unlocked %}unlocked{% else %}locked{% endif %}">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="achievement-icon text-white" style="background-color: {{ ach.color }};">
+                            <i class="bi {{ ach.icon }}"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h6 class="fw-bold mb-1 text-dark">{{ ach.title }}</h6>
+                                {% if ach.unlocked %}
+                                    <span class="badge bg-success-subtle text-success border border-success rounded-pill px-2 py-1 small">
+                                        <i class="bi bi-check-lg"></i> Unlocked
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary-subtle text-secondary rounded-pill px-2 py-1 small">
+                                        <i class="bi bi-lock-fill"></i> Locked
+                                    </span>
+                                {% endif %}
+                            </div>
+                            <p class="small text-muted mb-2">{{ ach.description }}</p>
+                            <div class="progress" style="height: 6px;">
+                                <div class="progress-bar" role="progressbar" style="width: {{ ach.progress }}%; background-color: {{ ach.color }};" aria-valuenow="{{ ach.progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Donor Support Benefits & Policy Section -->
+    <div class="row g-4 mb-5">
+        <div class="col-lg-7">
+            <div class="premium-card p-4 h-100">
+                <h5 class="fw-bold text-dark mb-3"><i class="bi bi-shield-heart-fill me-2 text-danger"></i> Family Donor-Support Benefit Policy</h5>
+                <p class="text-muted">
+                    LIFE DROP is a voluntary recognition and support platform. Your verified blood donation history builds your standing as an active community savior.
+                </p>
+                <div class="list-group list-group-flush border-0">
+                    <div class="list-group-item bg-transparent px-0 py-2 d-flex gap-3 align-items-start border-0">
+                        <i class="bi bi-check-circle-fill text-success fs-5 mt-1"></i>
+                        <div>
+                            <strong>Priority Blood Request Processing:</strong> In times of emergency, active donors and their immediate family members receive priority review subject to blood bank stock availability.
+                        </div>
+                    </div>
+                    <div class="list-group-item bg-transparent px-0 py-2 d-flex gap-3 align-items-start border-0">
+                        <i class="bi bi-check-circle-fill text-success fs-5 mt-1"></i>
+                        <div>
+                            <strong>Verified Health Credit Record:</strong> Every verified donation generates an official digital record accessible anytime for verification.
+                        </div>
+                    </div>
+                    <div class="list-group-item bg-transparent px-0 py-2 d-flex gap-3 align-items-start border-0">
+                        <i class="bi bi-check-circle-fill text-success fs-5 mt-1"></i>
+                        <div>
+                            <strong>Non-Monetary Community Recognition:</strong> Life Points and Ranks reflect your voluntary service without any monetary transaction, maintaining pure altruistic standards.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="premium-card p-4 h-100 text-center d-flex flex-column justify-content-center bg-light">
+                <i class="bi bi-heart-pulse text-danger display-4 mb-3"></i>
+                <h5 class="fw-bold text-dark mb-2">Schedule Your Next Donation</h5>
+                <p class="text-muted small mb-4">
+                    Maintain your regular donation cycle, keep your Life Points growing, and continue safeguarding lives in your community.
+                </p>
+                <a href="{% url 'add_donation' %}" class="btn btn-danger rounded-pill px-4 py-2 fw-bold shadow-sm">
+                    <i class="bi bi-plus-circle me-1"></i> Donate Blood Now
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Donation History & Points Ledger -->
+    <div class="premium-card p-4 mb-4">
+        <h5 class="fw-bold mb-3"><i class="bi bi-clock-history me-2 text-danger"></i> Donation & Points History</h5>
+        {% if donations %}
+            <div class="table-responsive">
+                <table class="table table-premium align-middle">
+                    <thead>
+                        <tr>
+                            <th>Donation Date</th>
+                            <th>Blood Group</th>
+                            <th>Units Donated</th>
+                            <th>Life Points Earned</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for d in donations %}
+                        <tr>
+                            <td class="fw-medium">{{ d.donation_date|date:"N j, Y, g:i a" }}</td>
+                            <td><span class="badge bg-danger rounded-pill px-3">{{ d.blood_group.blood_group }}</span></td>
+                            <td><strong class="text-dark">{{ d.units }} Unit(s)</strong></td>
+                            <td><span class="fw-bold text-success">+{{ d.units|add:0 }}00 Pts</span></td>
+                            <td><span class="badge bg-success rounded-pill px-3"><i class="bi bi-patch-check-fill me-1"></i> Verified & Recorded</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-4 text-muted">
+                <i class="bi bi-inbox fs-1 d-block mb-2 text-secondary"></i>
+                No blood donations recorded yet. Schedule your first donation to earn 100 Life Points!
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

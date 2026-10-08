@@ -35,6 +35,7 @@
                         <th>Donor Name</th>
                         <th>Contact</th>
                         <th>Blood Group</th>
+                        <th>LIFE DROP Rank</th>
                         <th>Age / Weight</th>
                         <th>Health Details</th>
                         <th>Eligibility</th>
@@ -58,6 +59,12 @@
                             <span class="badge bg-light border fs-6 px-3 py-2 rounded-pill shadow-sm" style="color: var(--primary);">
                                 {{ donor.blood_group.blood_group }}
                             </span>
+                        </td>
+                        <td>
+                            <span class="badge {{ donor.reward_info.badge_bg }} px-2 py-1 rounded-pill small">
+                                <i class="bi {{ donor.reward_info.level_icon }} me-1"></i> {{ donor.reward_info.level_name }}
+                            </span>
+                            <div class="small text-danger fw-bold mt-1">{{ donor.reward_info.points }} Pts</div>
                         </td>
                         <td>
                             <span class="fw-bold fs-6 text-dark">{{ donor.age }} yrs / {{ donor.weight }} kg</span> 
@@ -108,7 +115,7 @@
                     
                     {% empty %}
                     <tr>
-                        <td colspan="6" class="text-center text-muted py-5">
+                        <td colspan="8" class="text-center text-muted py-5">
                             <i class="bi bi-people fs-1 d-block mb-3" style="color: var(--primary-glare);"></i>
                             {% if query %}
                             <h5 class="fw-bold mb-1">No donors found.</h5>

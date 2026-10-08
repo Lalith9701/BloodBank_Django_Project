@@ -1,15 +1,56 @@
 {% extends 'base.html' %}
-{% block title %}My Donations | Blood Bank{% endblock %}
+{% block title %}My Donations & Appointments | Blood Bank{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3 mt-3">
-    <h2 class="fw-bold mb-0" style="color: var(--secondary); font-size: 2.2rem;">
-        <i class="bi bi-clock-history me-2" style="color: var(--primary);"></i>My Donation History
-    </h2>
-    <a href="{% url 'dashboard' %}" class="btn btn-secondary-custom shadow-sm">
-        <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
-    </a>
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 border-bottom pb-3 mt-3 gap-2">
+    <div>
+        <h2 class="fw-bold mb-0" style="color: var(--secondary); font-size: 2.2rem;">
+            <i class="bi bi-clock-history me-2" style="color: var(--primary);"></i>My Donations & Scheduled Appointments
+        </h2>
+        <p class="text-muted small mb-0">Track your past blood donations and manage upcoming scheduled appointments.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'add_donation' %}" class="btn btn-primary-custom shadow-sm rounded-pill px-4">
+            <i class="bi bi-calendar-plus me-1"></i> Schedule Donation
+        </a>
+        <a href="{% url 'dashboard' %}" class="btn btn-secondary-custom shadow-sm rounded-pill">
+            <i class="bi bi-arrow-left me-1"></i> Dashboard
+        </a>
+    </div>
 </div>
+
+<!-- Scheduled Appointments Section -->
+{% if appointments %}
+<div class="mb-5">
+    <h4 class="fw-bold text-dark mb-3"><i class="bi bi-calendar-event-fill me-2 text-primary"></i> Upcoming Scheduled Appointments</h4>
+    <div class="row g-3">
+        {% for appt in appointments %}
+        <div class="col-md-6 col-lg-4">
+            <div class="premium-card p-4 h-100 border-start border-4 border-primary shadow-sm rounded-4 position-relative">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <span class="badge bg-primary-subtle text-primary border border-primary rounded-pill px-3 py-1 small fw-bold">
+                        <i class="bi bi-clock-fill me-1"></i> {{ appt.status }}
+                    </span>
+                    <span class="badge bg-danger rounded-pill px-3 py-1 fw-bold fs-6">
+                        {{ appt.blood_group.blood_group }}
+                    </span>
+                </div>
+                <h5 class="fw-bold text-dark mb-1 mt-2">
+                    <i class="bi bi-calendar-check text-primary me-2"></i> {{ appt.scheduled_date|date:"F j, Y" }}
+                </h5>
+                <p class="text-muted small mb-3">
+                    <i class="bi bi-clock me-1 text-secondary"></i> Time Slot: <strong>{{ appt.time_slot }}</strong>
+                </p>
+                <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                    <span class="small text-muted">Requested Units: <strong>{{ appt.units }} Unit(s)</strong></span>
+                    <span class="small text-success fw-semibold"><i class="bi bi-check-circle-fill me-1"></i> Slot Reserved</span>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
 
 <!-- Cooldown Info Alert -->
 <div class="alert bg-primary-glare border-0 shadow-sm p-4 mb-5 rounded-4 d-flex align-items-center">
@@ -17,13 +58,15 @@
         <i class="bi bi-info-circle-fill display-4 text-primary"></i>
     </div>
     <div>
-        <h5 class="fw-bold text-dark mb-1">Donation Cooldown Policy</h5>
-        <p class="text-muted mb-0">For your safety and health, we require a minimum cooling period of <strong>90 days for men</strong> and <strong>120 days for women</strong> between blood donations. This allows your body to fully replenish its iron levels and red blood cells.</p>
+        <h5 class="fw-bold text-dark mb-1">Medical Donation Cooldown Policy</h5>
+        <p class="text-muted mb-0">For your safety and health, a required recovery interval of <strong>90 days for men</strong> and <strong>120 days for women</strong> applies between whole blood donations. This ensures complete iron & hemoglobin replenishment.</p>
     </div>
 </div>
 
+<!-- Past Donation History -->
+<h4 class="fw-bold text-dark mb-3"><i class="bi bi-droplet-fill me-2 text-danger"></i> Past Verified Donations</h4>
 {% if donations %}
-<div class="premium-card mb-5 border-0">
+<div class="premium-card mb-5 border-0 shadow-sm rounded-4 overflow-hidden">
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-premium table-borderless align-middle text-center mb-0">
@@ -32,6 +75,7 @@
                         <th>Blood Group</th>
                         <th>Units Donated</th>
                         <th>Date of Donation</th>
+                        <th>Status</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -47,7 +91,12 @@
                             <span class="text-muted small ms-1 text-uppercase" style="letter-spacing: 0.5px;">units</span>
                         </td>
                         <td class="text-secondary fw-semibold">
-                            <i class="bi bi-calendar-event me-2" style="color: var(--primary-light);"></i> {{ donation.donation_date }}
+                            <i class="bi bi-calendar-event me-2" style="color: var(--primary-light);"></i> {{ donation.donation_date|date:"F j, Y, g:i a" }}
+                        </td>
+                        <td>
+                            <span class="badge bg-success-subtle text-success border border-success px-3 py-2 rounded-pill small">
+                                <i class="bi bi-patch-check-fill me-1"></i> Recorded & Verified
+                            </span>
                         </td>
                     </tr>
                     {% endfor %}
@@ -57,13 +106,13 @@
     </div>
 </div>
 {% else %}
-<div class="premium-card mb-5 border-0 bg-transparent shadow-none border">
+<div class="premium-card mb-5 border-0 bg-transparent shadow-none border rounded-4">
     <div class="card-body text-center" style="padding: 80px 20px;">
         <i class="bi bi-clipboard-x d-block mb-3" style="font-size: 5rem; color: var(--primary-glare);"></i>
-        <h3 class="text-secondary fw-bold mb-2">No Donations Yet</h3>
-        <p class="text-muted mb-4 fs-5">You haven't made any blood donations yet. Your heroic contributions will trace here.</p>
+        <h3 class="text-secondary fw-bold mb-2">No Past Donations Yet</h3>
+        <p class="text-muted mb-4 fs-5">You haven't completed any blood donations yet. Schedule your first donation today to start saving lives!</p>
         <a href="{% url 'add_donation' %}" class="btn btn-primary-custom btn-lg shadow-hover px-5 rounded-pill">
-            <i class="bi bi-heart-pulse-fill me-2"></i> Make Your First Donation
+            <i class="bi bi-heart-pulse-fill me-2"></i> Schedule First Donation
         </a>
     </div>
 </div>

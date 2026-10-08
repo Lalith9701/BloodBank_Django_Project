@@ -45,6 +45,7 @@
                     <tr>
                         <th>Donor Name</th>
                         <th>Blood Group</th>
+                        <th>LIFE DROP Rank</th>
                         <th>City</th>
                         <th>Phone</th>
                         <th>Action</th>
@@ -62,6 +63,11 @@
                         <td>
                             <span class="badge bg-light border fs-6 px-3 py-2 rounded-pill shadow-sm" style="color: var(--primary);">
                                 {{ donor.blood_group.blood_group }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge {{ donor.reward_info.badge_bg }} px-3 py-2 rounded-pill shadow-sm">
+                                <i class="bi {{ donor.reward_info.level_icon }} me-1"></i> {{ donor.reward_info.level_name }}
                             </span>
                         </td>
                         <td>{{ donor.city }}</td>
